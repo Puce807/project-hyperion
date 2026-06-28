@@ -7,8 +7,10 @@ Project Hyperion aims to be a self-hosted astrophysics pipeline designed to proc
 1. Foundation
    - [ ] SQLite Database Schema
    - [ ] Basic queries via astroquery
-   - [ ] Basic calculations of distance and magnitude 
+   - [ ] Basic calculations of distance, magnitude and color index 
    - [ ] Basic CLI
+   - [ ] Logging
+   - [ ] Quality filters (RUWE, parallax error)
 
 
 2. Analytics
