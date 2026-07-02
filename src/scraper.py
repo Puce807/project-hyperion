@@ -44,8 +44,8 @@ def fetch_bulk(limit: int=1):
         """
     return execute_gaia_query(query)
 
-def fetch_data():
-    results = fetch_bulk()
+def fetch_data(limit):
+    results = fetch_bulk(limit)
     return results
 
 def fetch_individual_star(source_id):

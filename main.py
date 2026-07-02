@@ -1,4 +1,5 @@
 import shutil
+import time
 from src.logger import log
 from pathlib import Path
 from src.physics import find_distance, find_luminosity, find_colour_index, find_absolute_magnitude, estimate_temperature
@@ -19,42 +20,53 @@ if __name__ == "__main__":
     initialize_database()
     log("Database initialized successfully")
 
-    results = fetch_data()
+    stars_to_fetch = 10
+    start = time.time()
+    results = fetch_data(stars_to_fetch)
+    print(results)
     if not results or len(results) == 0:
         log("No star data returned from scraper. Exiting pipeline", level="critical")
         exit()
+    if len(results) != stars_to_fetch:
+        log(f"Number of received results ({len(results)}) does not match expected amount ({stars_to_fetch})", level="warn")
 
-    source_id = int(results["source_id"][0])
-    distance = find_distance(float(results["parallax"][0]))
-    temp = estimate_temperature(float(results["bp_rp"][0]))
-    abs_mag = float(find_absolute_magnitude(results["phot_g_mean_mag"][0], distance))
-    luminosity = float(find_luminosity(abs_mag))
+    for row in results:
+        source_id = int(row["source_id"])
+        log(f"Processing calculations for target: {source_id}...")
 
-    data_dict = {
-        "id": source_id,
-        "ra_deg": float(results["ra"][0]),
-        "dec_deg": float(results["dec"][0]),
-        "parallax_mas": float(results["parallax"][0]),
-        "parallax_error": float(results["parallax_error"][0]),
-        "ruwe": float(results["ruwe"][0]),
-        "astrometric_excess_noise": float(results["astrometric_excess_noise"][0]),
-        "phot_g_mean_mag": float(results["phot_g_mean_mag"][0]),
-        "phot_bp_mean_mag": float(results["phot_bp_mean_mag"][0]),
-        "phot_rp_mean_mag": float(results["phot_rp_mean_mag"][0]),
-        "bp_rp": float(results["bp_rp"][0]),
-        "phot_g_mean_flux_over_error": float(results["phot_g_mean_flux_over_error"][0]),
-        "phot_variable_flag": str(results["phot_variable_flag"][0])
-    }
+        distance = find_distance(float(row["parallax"]))
+        temp = estimate_temperature(float(row["bp_rp"]))
+        abs_mag = float(find_absolute_magnitude(row["phot_g_mean_mag"], distance))
+        luminosity = float(find_luminosity(abs_mag))
 
-    calc_dict = {
-        "distance": distance,
-        "temperature": temp,
-        "absolute_magnitude": abs_mag,
-        "luminosity": luminosity
-    }
+        data_dict = {
+            "id": source_id,
+            "ra_deg": float(row["ra"]),
+            "dec_deg": float(row["dec"]),
+            "parallax_mas": float(row["parallax"]),
+            "parallax_error": float(row["parallax_error"]),
+            "ruwe": float(row["ruwe"]),
+            "astrometric_excess_noise": float(row["astrometric_excess_noise"]),
+            "phot_g_mean_mag": float(row["phot_g_mean_mag"]),
+            "phot_bp_mean_mag": float(row["phot_bp_mean_mag"]),
+            "phot_rp_mean_mag": float(row["phot_rp_mean_mag"]),
+            "bp_rp": float(row["bp_rp"]),
+            "phot_g_mean_flux_over_error": float(row["phot_g_mean_flux_over_error"]),
+            "phot_variable_flag": str(row["phot_variable_flag"])
+        }
 
-    log(f"Calculations complete for {source_id}. Handing record to database.", level="INFO")
-    final_record = data_dict | calc_dict
-    add_star(final_record)
+        calc_dict = {
+            "distance": distance,
+            "temperature": temp,
+            "absolute_magnitude": abs_mag,
+            "luminosity": luminosity
+        }
 
-    # Next: Error handling, SQL database1
+        log(f"Calculations complete for {source_id}. Handing record to database.", level="INFO")
+        final_record = data_dict | calc_dict
+        add_star(final_record)
+    length = time.time() - start
+    per_star = length / len(results)
+    log(f"Processed {len(results)} stars in {round(length, 2)} seconds. Average {round(per_star, 4)}s per star")
+
+
