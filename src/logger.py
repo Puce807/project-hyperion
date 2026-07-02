@@ -1,10 +1,12 @@
 import inspect
+import time
+import os
 from pathlib import Path
 from datetime import datetime, timezone
 
 def log(msg, level="INFO", source=None):
-    """Logs to terminal and logs file
-    Valid level values: INFO, WARN, ERROR, DEBUG"""
+    """Logs to terminal and logs to daily log file.
+    Valid level values: INFO, WARN, ERROR, CRITICAL, DEBUG"""
     formatted_time = datetime.now(timezone.utc).isoformat(timespec="milliseconds")
     formatted_time = formatted_time.replace("+00:00", "Z")
 
@@ -14,6 +16,11 @@ def log(msg, level="INFO", source=None):
 
     message = f"{formatted_time} [{level.upper()}] [{source}] {msg}"
 
+    log_folder = Path(__file__).resolve().parent.parent / "logs"
+    os.makedirs(log_folder, exist_ok=True)
+    log_path = log_folder / f"{time.strftime('%Y-%m-%d')}.log"
+    with open(log_path, "a") as file:
+        file.write(message + "\n")
+
     print(message)
 
-log("idk")

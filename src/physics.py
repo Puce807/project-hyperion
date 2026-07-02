@@ -1,4 +1,5 @@
 import math
+from src.logger import *
 
 def find_distance(parallax_mas: float) -> float | None:
     """Calculates distance in Parsecs using parallax angle in milliarcseconds"""

@@ -1,4 +1,5 @@
 from astroquery.gaia import Gaia
+from src.logger import log
 import config
 
 Gaia.MAIN_GAIA_TABLE = config.GAIA_TABLE
@@ -23,11 +24,12 @@ def execute_gaia_query(adql_query: str):
     """Helper function to handle job execution"""
     try:
         job = Gaia.launch_job(adql_query)
-        print(job.get_results())
-        return job.get_results()
+        results = job.get_results()
+        log(f"Gaia query executed successfully. Retrieved {len(results)} rows.")
+        return results
     except Exception as e:
         print(e)
-        # TODO: LOG EXCEPTION
+        log(f"Could not execute Gaia query: {e}", level="error")
         return None
 
 def fetch_bulk(limit: int=1):
@@ -43,7 +45,6 @@ def fetch_bulk(limit: int=1):
     return execute_gaia_query(query)
 
 def fetch_data():
-    # TODO: Add error handling
     results = fetch_bulk()
     return results
 
@@ -63,5 +64,6 @@ def fetch_individual_star(source_id):
     if results and len(results) > 0:
         return results[0]
     else:
+        log("No results found", level="error")
         return None
 

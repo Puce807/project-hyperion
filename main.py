@@ -1,4 +1,5 @@
 import shutil
+from src.logger import log
 from pathlib import Path
 from src.physics import find_distance, find_luminosity, find_colour_index, find_absolute_magnitude, estimate_temperature
 from src.scraper import fetch_data
@@ -13,16 +14,24 @@ if not CONFIG_FILE.exists():
 import config
 
 if __name__ == "__main__":
+    log("Hyperion pipeline starting...")
+    log("Initializing database...")
     initialize_database()
+    log("Database initialized successfully")
 
     results = fetch_data()
+    if not results or len(results) == 0:
+        log("No star data returned from scraper. Exiting pipeline", level="critical")
+        exit()
+
+    source_id = int(results["source_id"][0])
     distance = find_distance(float(results["parallax"][0]))
     temp = estimate_temperature(float(results["bp_rp"][0]))
     abs_mag = float(find_absolute_magnitude(results["phot_g_mean_mag"][0], distance))
     luminosity = float(find_luminosity(abs_mag))
 
     data_dict = {
-        "id": int(results["source_id"][0]),
+        "id": source_id,
         "ra_deg": float(results["ra"][0]),
         "dec_deg": float(results["dec"][0]),
         "parallax_mas": float(results["parallax"][0]),
@@ -44,6 +53,7 @@ if __name__ == "__main__":
         "luminosity": luminosity
     }
 
+    log(f"Calculations complete for {source_id}. Handing record to database.", level="INFO")
     final_record = data_dict | calc_dict
     add_star(final_record)
 
