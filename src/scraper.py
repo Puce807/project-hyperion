@@ -58,7 +58,6 @@ def fetch_individual_star(source_id):
         WHERE 
             source_id = {source_id}
             AND {GAIA_QUALITY_FILTERS}
-        LIMIT 1
         """
     results = execute_gaia_query(query)
     if results and len(results) > 0:

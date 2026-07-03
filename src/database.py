@@ -1,9 +1,9 @@
 import pathlib
 import sqlite3
 import os
+
 import config
 from src.logger import log
-
 
 def initialize_database():
     """Initialises database by creating file and adding missing columns."""
@@ -69,9 +69,32 @@ def add_star(data_dict: dict):
     except sqlite3.IntegrityError:
         log(f"Target ID {data_dict.get('id')} already exists in local database. Skipping", level="warn")
     except Exception as e:
-        log(f"Failed database write operation: {e} Star ({data_dict.get('id')}) not saved", level="ERROR")
+        log(f"Failed database write operation: {e} Star ({data_dict.get('id')}) not saved", level="error")
     finally:
         connection.close()
+
+def fetch_star(source_id):
+    """Returns saved data on a certain star based on source ID"""
+    connection = sqlite3.connect(config.DATABASE_PATH)
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+
+    sql = f"SELECT * FROM stars WHERE id = {source_id};"
+
+    try:
+        cursor.execute(sql)
+        results = cursor.fetchone()
+        log(f"Successfully retrieved data of star {source_id} from local database")
+        if results is None:
+            log(f"No data found for star {source_id}", level="error")
+            return None
+        return results
+    except Exception as e:
+        log(f"Failed to retrieve data of star {source_id} Error: {e}", level="error")
+        return None
+    finally:
+        connection.close()
+
 
 if __name__ == "__main__":
     initialize_database()
