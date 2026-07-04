@@ -44,7 +44,7 @@ def inspect(gaia_id):
 
     #answer = ask("Do you want to save this star to the local database? [y/n]", ["y","n"])
     #if answer.lower() == "y":
-        # TODO: Add new file "pipeline.py" to run a process_stars function that takes raw data and produces dict ready for DB upload including physics calculations
+        # TODO: Check local DB before query
         #add_star(star_dict)
 
 cli.add_command(inspect)

@@ -1,7 +1,6 @@
 import pathlib
 import sqlite3
 import os
-
 import config
 from src.logger import log
 
@@ -13,26 +12,12 @@ def initialize_database():
     cursor.execute("CREATE TABLE IF NOT EXISTS stars (id INTEGER PRIMARY KEY)")
     log(f"Database core file verified at {config.DATABASE_PATH}")
 
-    core_gaia_columns = [
-        "ra_deg REAL",
-        "dec_deg REAL",
-        "parallax_mas REAL",
-        "parallax_error REAL",
-        "ruwe REAL",
-        "astrometric_excess_noise REAL",
-        "phot_g_mean_mag REAL",
-        "phot_bp_mean_mag REAL",
-        "phot_rp_mean_mag REAL",
-        "bp_rp REAL",
-        "phot_g_mean_flux_over_error REAL",
-        "radial_velocity REAL",
-        "phot_variable_flag TEXT"
-    ]
+    core_gaia_columns = config.GAIA_FIELDS_LIST[1:]
 
     calculated_columns = [
         "absolute_magnitude REAL",
         "distance REAL",
-        "color_index REAL",
+        "colour_index REAL",
         "temperature REAL",
         "luminosity REAL"
     ]
