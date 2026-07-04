@@ -21,19 +21,21 @@ if __name__ == "__main__":
     initialize_database()
     log("Database initialized successfully")
 
-    stars_to_fetch = 100
+    stars_to_fetch = 100000
     start = time.time()
     results = fetch_data(stars_to_fetch)
-    if not results or len(results) == 0:
+    total = len(results)
+    if not results or total == 0:
         log("No star data returned from scraper. Exiting pipeline", level="critical")
         exit()
-    if len(results) != stars_to_fetch:
+    if total != stars_to_fetch:
         log(f"Number of received results ({len(results)}) does not match expected amount ({stars_to_fetch})", level="warn")
 
-    for row in results:
+    for idx, row in enumerate(results):
         final_record = process_star(row)
         if final_record:
             add_star(final_record)
+            log(f"Processed {idx+1}/{total} ({round(idx+1 / total, 2)}%) stars")
         else:
             log("Could not add star to DB as process_star returned None", level="error")
     length = time.time() - start
@@ -41,3 +43,4 @@ if __name__ == "__main__":
     log(f"Processed {len(results)} stars in {round(length, 2)} seconds. Average {round(per_star, 4)}s per star")
 
 
+# TODO: Add docs to explain what Gaia fields do

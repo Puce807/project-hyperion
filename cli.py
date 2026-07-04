@@ -57,3 +57,4 @@ if __name__ == "__main__":
 # TODO: List stars - prints clean table of current stars - --sort --limit
 # TODO: HR Diagram - opens matplotlib HR diagram - --save (save image as png)
 # TODO: Stats - prints fun stats
+# TODO: Purge - deletes DB

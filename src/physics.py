@@ -30,7 +30,7 @@ def find_absolute_magnitude(apparent_magnitude: float, distance_parsecs: float) 
     return apparent_magnitude - 5 * math.log10(distance_parsecs) + 5
 
 def estimate_temperature(colour_index: float) -> float | None:
-    """Estimate stellar effective temperature from BP-RP colour index."""
+    """Estimate stellar effective temperature (kelvin) from BP-RP colour index."""
     if colour_index is None:
         return None
     try:

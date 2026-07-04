@@ -9,10 +9,16 @@ def initialize_database():
     os.makedirs("data", exist_ok=True)
     connection = sqlite3.connect(config.DATABASE_PATH)
     cursor = connection.cursor()
+
+    cursor.execute("PRAGMA journal_mode=WAL;")
     cursor.execute("CREATE TABLE IF NOT EXISTS stars (id INTEGER PRIMARY KEY)")
     log(f"Database core file verified at {config.DATABASE_PATH}")
 
-    core_gaia_columns = config.GAIA_FIELDS_LIST[1:]
+    core_gaia_columns = config.GAIA_FIELDS_LIST
+
+    integer_fields = ["phot_g_n_obs", "phot_bp_n_obs", "phot_rp_n_obs"]
+    text_fields = ["phot_variable_flag"]
+    boolean_fields = ["has_epoch_photometry"]
 
     calculated_columns = [
         "absolute_magnitude REAL",
@@ -22,20 +28,38 @@ def initialize_database():
         "luminosity REAL"
     ]
 
-
     columns = core_gaia_columns + calculated_columns
     log(f"Verifying {len(columns)} database schema columns...")
-    for col in columns:
+
+    for field_name in config.GAIA_FIELDS_LIST:
+        if field_name == "source_id":
+            continue
+
+        if field_name in integer_fields:
+            col_definition = f"{field_name} INTEGER"
+        elif field_name in text_fields:
+            col_definition = f"{field_name} TEXT"
+        elif field_name in boolean_fields:
+            col_definition = f"{field_name} INTEGER"
+        else:
+            col_definition = f"{field_name} REAL"
+
+        try:
+            cursor.execute(f"ALTER TABLE stars ADD COLUMN {col_definition};")
+            log(f"Schema updated: Added telemetry column '{field_name}' ({col_definition.split()[1]})", level="INFO")
+        except sqlite3.OperationalError:
+            pass
+
+    for col in calculated_columns:
         col_name = col.split()[0]
         try:
             cursor.execute(f"ALTER TABLE stars ADD COLUMN {col};")
             log(f"Schema updated: Added column '{col_name}'")
-            # ADD LOGS HERE
         except sqlite3.OperationalError:
             pass
+
     connection.commit()
     connection.close()
-
     log("Database initialization complete", level="INFO")
 
 def add_star(data_dict: dict):
