@@ -74,7 +74,6 @@ def add_star(data_dict: dict):
     try:
         cursor.execute(sql, tuple(data_dict.values()))
         connection.commit()
-        log(f"Successfully stored target ID {data_dict.get('id')} to local database")
     except sqlite3.IntegrityError:
         log(f"Target ID {data_dict.get('id')} already exists in local database. Skipping", level="warn")
     except Exception as e:

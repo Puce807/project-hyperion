@@ -1,3 +1,5 @@
+from email.policy import default
+
 import click
 from src.logger import log
 import src.logger as logger
@@ -20,17 +22,18 @@ def cli():
     """Hyperion CLI"""
     pass
 
-@click.command()
+@cli.command()
 @click.argument("gaia_id", type=int)
 @click.option("-v", "--verbose", is_flag=True, help="Print debug logs to the terminal.")
 def inspect(gaia_id, verbose):
     """Pull star data from local database or Gaia including calculated fields"""
     from src.scraper import fetch_individual_star
-    from src.database import fetch_star, add_star
+    from src.database import fetch_star, add_star, initialize_database
     from src.pipeline import process_star
 
     logger.VERBOSE = verbose
 
+    initialize_database()
     data = fetch_star(int(gaia_id))
     if data is not None: # Star exists in local database
         final_record = dict(data)
@@ -54,12 +57,21 @@ def inspect(gaia_id, verbose):
         if answer.lower() == "y":
             add_star(final_record)
 
-cli.add_command(inspect)
+@cli.command()
+@click.option("-l", "--limit", type=int, default=1000, help="Number of stars to fetch")
+@click.option("-v", "--verbose", is_flag=True, help="Print debug logs to the terminal.")
+def fetch_bulk(limit, verbose):
+    """Pull stars from Gaia database for download to local DB"""
+    # TODO: Add filters
+    from src.pipeline import run_ingestion
+    from src.database import initialize_database
+    initialize_database()
+    logger.VERBOSE = verbose
+    run_ingestion(limit)
 
 if __name__ == "__main__":
     cli()
 
-# TODO: Fetch bulk - downloads a bulk cluster of stars - --limit, --min-parallax
 # TODO: Sync star - saves / updates star to DB
 # TODO: List stars - prints clean table of current stars - --sort --limit
 # TODO: HR Diagram - opens matplotlib HR diagram - --save (save image as png)
