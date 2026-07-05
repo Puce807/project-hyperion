@@ -93,10 +93,10 @@ def fetch_star(source_id):
     try:
         cursor.execute(sql)
         results = cursor.fetchone()
-        log(f"Successfully retrieved data of star {source_id} from local database")
         if results is None:
             log(f"No data found for star {source_id}", level="error")
             return None
+        log(f"Successfully retrieved data of star {source_id} from local database")
         return results
     except Exception as e:
         log(f"Failed to retrieve data of star {source_id} Error: {e}", level="error")

@@ -11,12 +11,14 @@ Project Hyperion aims to be a self-hosted astrophysics pipeline designed to proc
    - [ ] Basic CLI
    - [x] Logging
    - [ ] Quality filters (RUWE, parallax error)
+   - [ ] HR Diagram to show results
 
 
 2. Analytics
    - [ ] Web Dashboard (maybe)
    - [ ] Multiprocessing
-   - [ ] Cone search via astroquery
+   - [ ] Chunking with 1 network pull for larger volumes (100,000+ stars)
+   - [ ] Cone search 
    - [ ] Interactive diagrams via Plotly or Matplotlib
    - [ ] Variable star identification
    - [ ] Binary star identification

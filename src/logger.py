@@ -4,9 +4,11 @@ import os
 from pathlib import Path
 from datetime import datetime, timezone
 
+VERBOSE = True
+
 def log(msg, level="INFO", source=None):
     """Logs to terminal and logs to daily log file.
-    Valid level values: INFO, WARN, ERROR, CRITICAL, DEBUG"""
+    Valid level values: INFO, WARN, ERROR, CRITICAL, DEBUG, CLI"""
     formatted_time = datetime.now(timezone.utc).isoformat(timespec="milliseconds")
     formatted_time = formatted_time.replace("+00:00", "Z")
 
@@ -22,5 +24,9 @@ def log(msg, level="INFO", source=None):
     with open(log_path, "a") as file:
         file.write(message + "\n")
 
-    print(message)
+    if level.upper() == "CLI":
+        print(msg)
+        return
+    elif VERBOSE:
+        print(message)
 
