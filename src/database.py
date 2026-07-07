@@ -103,6 +103,43 @@ def fetch_star(source_id):
     finally:
         connection.close()
 
+def fetch_stars_batch(source_ids=None, fields=None, limit=None):
+    """Returns saved data for a list of star source IDs or picks random stars if empty, selecting specific fields"""
+    # TODO: Remove fetch_star function as this makes it redundant
+    if source_ids is None:
+        source_ids = []
+
+    connection = sqlite3.connect(config.DATABASE_PATH)
+    connection.row_factory = sqlite3.Row
+    cursor = connection.cursor()
+
+    columns_clause = ", ".join(fields) if fields else "*"
+
+    query_args = ()
+    limit_clause = f" LIMIT {int(limit)}" if limit is not None else ""
+
+    if source_ids:
+        placeholders = ", ".join(["?"] * len(source_ids))
+        sql = f"SELECT {columns_clause} FROM stars WHERE id IN ({placeholders}){limit_clause};"
+        query_args = tuple(source_ids)
+        log_msg = f"Querying up to {limit if limit else len(source_ids)} specific target IDs"
+    else:
+        sql = f"SELECT {columns_clause} FROM stars ORDER BY RANDOM(){limit_clause};"
+        log_msg = f"No source IDs provided. Fetching {limit if limit else 'all available'} random stars from local DB"
+
+    log(log_msg, level="INFO")
+
+    try:
+        cursor.execute(sql, query_args)
+        results = cursor.fetchall()
+
+        log(f"Successfully retrieved {len(results)} records from the local database", level="CLI")
+        return results
+    except Exception as e:
+        log(f"Failed to execute batch/random star retrieval. Error: {e}", level="error")
+        return []
+    finally:
+        connection.close()
 
 if __name__ == "__main__":
     initialize_database()

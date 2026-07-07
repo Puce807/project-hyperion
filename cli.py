@@ -69,6 +69,12 @@ def fetch_bulk(limit, verbose):
     logger.VERBOSE = verbose
     run_ingestion(limit)
 
+@cli.command()
+@click.option("-l", "--limit", type=int, default=1000, help="Number of stars to show on plot")
+def hr_diagram(limit):
+    """Shows a HR diagram using stars from local DB"""
+
+
 if __name__ == "__main__":
     cli()
 

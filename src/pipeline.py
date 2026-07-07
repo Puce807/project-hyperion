@@ -99,6 +99,29 @@ def process_star(row):
 
     return db_record
 
+def format_time(seconds):
+    if seconds == 0:
+        return "0 seconds"
+
+    intervals = (
+        ('days', 86400),
+        ('hours', 3600),
+        ('minutes', 60),
+        ('seconds', 1)
+    )
+
+    parts = []
+    for name, count in intervals:
+        value = seconds // count
+        if value > 0:
+            seconds %= count
+            unit_name = name[:-1] if value == 1 else name
+            parts.append(f"{value} {unit_name}")
+
+    if len(parts) == 1:
+        return parts[0]
+    else:
+        return ", ".join(parts[:-1]) + f" and {parts[-1]}"
 
 def run_ingestion(limit: int):
     """Orchestrates the downloading, processing, and database storage of stellar data."""
@@ -123,17 +146,22 @@ def run_ingestion(limit: int):
     success_count = 0
     for idx, row in enumerate(results):
         current_star_num = idx + 1
+        num_updates = 100
+        update_every = max(1, int(total / num_updates))
 
         final_record = process_star(row)
 
         if final_record:
             add_star(final_record)
             success_count += 1
-            if current_star_num % 100 == 1:
-                log(f"Completed {current_star_num}/{total} stars ({round(current_star_num/total), 2}%)")
         else:
             log(f"Pipeline dropped star row at index {idx}: process_star returned None.", level="ERROR")
 
+        if current_star_num % update_every == 1:
+            elapsed = time.time() - start_time
+            per_star = elapsed / current_star_num
+            time_estimate = (total - current_star_num) * per_star
+            log(f"Completed {current_star_num}/{total} stars ({round(current_star_num / total, 2)}%) Est. {format_time(time_estimate)} remaining")
 
     elapsed_time = time.time() - start_time
     per_star_latency = elapsed_time / total if total > 0 else 0
