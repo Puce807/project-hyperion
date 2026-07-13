@@ -64,4 +64,4 @@ def hr_diagram(limit=5000, style="density"):
     plt.show()
 
 if __name__ == "__main__":
-    hr_diagram(100000, "colour")
+    hr_diagram(200000, "colour")
