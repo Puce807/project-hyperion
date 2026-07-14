@@ -4,7 +4,7 @@ from scipy.stats import gaussian_kde
 import config
 from src.database import fetch_stars_batch
 
-def hr_diagram(limit=5000, style="density"):
+def plot_hr_diagram(limit=5000, style="density", filepath=""):
     fields = ["colour_index", "luminosity"]
     # TODO: Change to temperature instead of colour index
     # TODO: Pull temperature from `teff_gspphot`
@@ -59,9 +59,12 @@ def hr_diagram(limit=5000, style="density"):
         cbar.set_label('Apparent Colour', color='#c5c6c7', fontsize=10, labelpad=10)
         cbar.ax.tick_params(labelsize=8, colors='#c5c6c7')
 
+    if filepath:
+        plt.savefig(filepath, dpi=300, transparent=True, bbox_inches='tight')
 
     plt.tight_layout()
     plt.show()
 
+
 if __name__ == "__main__":
-    hr_diagram(200000, "colour")
+    plot_hr_diagram(200000, "colour")

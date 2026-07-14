@@ -1,8 +1,8 @@
-from email.policy import default
-
 import click
+import random
 from src.logger import log
 import src.logger as logger
+from src.plotting import plot_hr_diagram
 
 
 def ask(msg, valid_options=None):
@@ -70,10 +70,25 @@ def fetch_bulk(limit, verbose):
     run_ingestion(limit)
 
 @cli.command()
-@click.option("-l", "--limit", type=int, default=1000, help="Number of stars to show on plot")
-def hr_diagram(limit):
+@click.option("-l", "--limit", type=int, default=10000, help="Number of stars to show on plot")
+@click.option("-s", "--style", type=str, default="colour", help="Style of plot: colour, density")
+@click.option("--save", type=str, is_flag=False, flag_value="default", default=None, help="Save plot to file, pass without value to generate filename")
+def hr_diagram(limit, style, save):
     """Shows a HR diagram using stars from local DB"""
+    print(save)
+    if save is None:
+        plot_hr_diagram(limit, style)
+    elif save == "default":
+        filename = f"HR_{limit}_{random.randint(1,1000)}"
+        print(filename)
+        plot_hr_diagram(limit, style, filename)
+    else:
+        plot_hr_diagram(limit, style, save)
 
+@cli.command()
+@click.option("-v", "--verbose", required=False, help="Print debug logs to the terminal.")
+def test(v):
+    print(v)
 
 if __name__ == "__main__":
     cli()

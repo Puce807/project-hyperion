@@ -23,3 +23,4 @@ if __name__ == "__main__":
 
 
 # TODO: Add docs to explain what Gaia fields do
+# TODO: Add CLI docs
