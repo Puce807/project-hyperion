@@ -3,8 +3,10 @@ from src.logger import *
 
 def find_distance(parallax_mas: float) -> float | None:
     """Calculates distance in Parsecs using parallax angle in milliarcseconds"""
+    if isinstance(parallax_mas, bool) or isinstance(parallax_mas, str):
+        raise ValueError(f"parallax_mas must be positive float, got: {parallax_mas}")
     if parallax_mas is None or parallax_mas <= 0:
-        raise ValueError(f"parallax_mas must be positive, got: {parallax_mas}")
+        raise ValueError(f"parallax_mas must be positive float, got: {parallax_mas}")
     return 1000 / parallax_mas
 
 def find_colour_index(bp: float, rp: float) -> float | None:
