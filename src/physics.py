@@ -3,15 +3,9 @@ from src.logger import *
 
 def find_distance(parallax_mas: float) -> float | None:
     """Calculates distance in Parsecs using parallax angle in milliarcseconds"""
-    if parallax_mas is None:
-        return None
-    if parallax_mas <= 0:
-        return None
-
-    try:
-        return 1000 / parallax_mas
-    except ZeroDivisionError:
-        return None
+    if parallax_mas is None or parallax_mas <= 0:
+        raise ValueError(f"parallax_mas must be positive, got: {parallax_mas}")
+    return 1000 / parallax_mas
 
 def find_colour_index(bp: float, rp: float) -> float | None:
     """Calculates colour index (surface temperature of a star)"""

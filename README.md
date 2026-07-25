@@ -15,6 +15,7 @@ Project Hyperion aims to be a self-hosted astrophysics pipeline designed to proc
    - [x] Logging
    - [ ] Quality filters (RUWE, parallax error)
    - [ ] HR Diagram to show results
+   - [ ] Testing
 
 
 2. Analytics
