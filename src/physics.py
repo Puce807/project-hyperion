@@ -12,18 +12,19 @@ def find_distance(parallax_mas: float) -> float | None:
 def find_colour_index(bp: float, rp: float) -> float | None:
     """Calculates colour index (surface temperature of a star)"""
     if not isinstance(bp, (int, float)) or isinstance(bp, bool) or bp is None:
-        raise ValueError(f"bp a float, got: {bp}")
+        raise ValueError(f"bp must be a float, got: {bp}")
     if not isinstance(rp, (int, float)) or isinstance(rp, bool) or rp is None:
-        raise ValueError(f"rp float, got: {bp}")
+        raise ValueError(f"rp must be a float, got: {bp}")
     return bp - rp
 
 def find_absolute_magnitude(apparent_magnitude: float, distance_parsecs: float) -> float | None:
     """Calculate absolute magnitude using the distance modulus formula."""
-    if apparent_magnitude is None:
-        return None
-    if distance_parsecs is None or distance_parsecs <= 0:
-        return None
-
+    if (not isinstance(apparent_magnitude, (int, float)) or isinstance(apparent_magnitude, bool)
+            or apparent_magnitude is None):
+        raise ValueError(f"apparent_magnitude must be a float, got: {apparent_magnitude}")
+    if (not isinstance(distance_parsecs, (int, float)) or isinstance(distance_parsecs,bool) or distance_parsecs is None
+            or distance_parsecs <= 0):
+        raise ValueError(f"distance_parsecs must be a positive float, got: {distance_parsecs}")
     return apparent_magnitude - 5 * math.log10(distance_parsecs) + 5
 
 def estimate_temperature(colour_index: float) -> float | None:
