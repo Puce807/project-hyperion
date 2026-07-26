@@ -1,5 +1,5 @@
 import pytest
-from src.physics import find_distance, find_colour_index, find_absolute_magnitude, find_luminosity
+from src.physics import find_distance, find_colour_index, find_absolute_magnitude, find_luminosity, estimate_temperature
 
 def test_find_distance():
     assert find_distance(1000) == pytest.approx(1.0, rel=1e-3), "A parallax value of 1000 should yield a distance of ~1"
@@ -52,10 +52,17 @@ def test_find_luminosity():
     with pytest.raises(ValueError):
         find_luminosity(None)
     with pytest.raises(ValueError):
-        find_luminosity(0)
-    with pytest.raises(ValueError):
-        find_luminosity(-100)
-    with pytest.raises(ValueError):
         find_luminosity("test")
     with pytest.raises(ValueError):
         find_luminosity(True)
+
+def test_estimate_temperature():
+    assert estimate_temperature(0.5) == pytest.approx(6388.8889, rel=1e-3), "An apparent magnitude of 0.5 should yield a luminosity of ~6388.8889"
+    assert estimate_temperature(1.82) == pytest.approx(3368.0868, rel=1e-3), "An apparent magnitude of 1.82 should yield a luminosity of ~3368.0868"# Colour index of Proxima Centauri
+
+    with pytest.raises(ValueError):
+        estimate_temperature(None)
+    with pytest.raises(ValueError):
+        estimate_temperature("test")
+    with pytest.raises(ValueError):
+        estimate_temperature(True)

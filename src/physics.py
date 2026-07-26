@@ -29,8 +29,8 @@ def find_absolute_magnitude(apparent_magnitude: float, distance_parsecs: float) 
 
 def estimate_temperature(colour_index: float) -> float | None:
     """Estimate stellar effective temperature (kelvin) from BP-RP colour index."""
-    if colour_index is None:
-        return None
+    if not isinstance(colour_index, (int, float)) or isinstance(colour_index, bool) or colour_index is None:
+        raise ValueError(f"colour_index must be a float, got: {colour_index}")
     try:
         return 4600 * (1 / (0.92 * colour_index + 1.7) + 1 / (0.92 * colour_index + 0.62))
     except ZeroDivisionError:
