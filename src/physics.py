@@ -14,7 +14,7 @@ def find_colour_index(bp: float, rp: float) -> float | None:
     if not isinstance(bp, (int, float)) or isinstance(bp, bool) or bp is None:
         raise ValueError(f"bp must be a float, got: {bp}")
     if not isinstance(rp, (int, float)) or isinstance(rp, bool) or rp is None:
-        raise ValueError(f"rp must be a float, got: {bp}")
+        raise ValueError(f"rp must be a float, got: {rp}")
     return bp - rp
 
 def find_absolute_magnitude(apparent_magnitude: float, distance_parsecs: float) -> float | None:
@@ -32,7 +32,8 @@ def estimate_temperature(colour_index: float) -> float | None:
     if not isinstance(colour_index, (int, float)) or isinstance(colour_index, bool) or colour_index is None:
         raise ValueError(f"colour_index must be a float, got: {colour_index}")
     try:
-        return 4600 * (1 / (0.92 * colour_index + 1.7) + 1 / (0.92 * colour_index + 0.62))
+        temp = 4600 * (1 / (0.92 * colour_index + 1.7) + 1 / (0.92 * colour_index + 0.62))
+        return temp if temp > 0 else None
     except ZeroDivisionError:
         return None
 
