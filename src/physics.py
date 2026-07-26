@@ -11,9 +11,10 @@ def find_distance(parallax_mas: float) -> float | None:
 
 def find_colour_index(bp: float, rp: float) -> float | None:
     """Calculates colour index (surface temperature of a star)"""
-    if bp is None or rp is None:
-        return None
-
+    if not isinstance(bp, (int, float)) or isinstance(bp, bool) or bp is None:
+        raise ValueError(f"bp a float, got: {bp}")
+    if not isinstance(rp, (int, float)) or isinstance(rp, bool) or rp is None:
+        raise ValueError(f"rp float, got: {bp}")
     return bp - rp
 
 def find_absolute_magnitude(apparent_magnitude: float, distance_parsecs: float) -> float | None:

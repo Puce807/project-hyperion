@@ -4,6 +4,7 @@
 
 Project Hyperion aims to be a self-hosted astrophysics pipeline designed to process data from the European Space Agency's (ESA) Gaia mission.
 
+> **Status: Active Development / Work in Progress**
 
 ## Roadmap
 
@@ -12,11 +13,12 @@ Project Hyperion aims to be a self-hosted astrophysics pipeline designed to proc
    - [x] Basic queries via astroquery
    - [x] Basic calculations of distance, magnitude and color index 
    - [ ] Basic CLI
+   - [ ] Add levels of filtering to CLI (none, strict, custom, etc)
    - [x] Logging
    - [ ] Quality filters (RUWE, parallax error)
    - [ ] HR Diagram to show results
    - [ ] Testing
-
+   - [ ] Add current results to README (hr diagram)
 
 2. Analytics
    - [ ] Web Dashboard (maybe)
