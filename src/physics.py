@@ -39,6 +39,6 @@ def estimate_temperature(colour_index: float) -> float | None:
 def find_luminosity(absolute_magnitude: float) -> float | None:
     """Calculate luminosity relative to the sun (L☉) from absolute magnitude"""
     sun_absolute_magnitude = 4.83
-    if absolute_magnitude is None:
-        return None
+    if not isinstance(absolute_magnitude, (int, float)) or isinstance(absolute_magnitude, bool) or absolute_magnitude is None:
+        raise ValueError(f"absolute_magnitude must be a float, got: {absolute_magnitude}")
     return 10 ** ((sun_absolute_magnitude - absolute_magnitude) / 2.5)
