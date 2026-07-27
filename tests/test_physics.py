@@ -18,7 +18,7 @@ def test_find_colour_index():
 
 def test_find_absolute_magnitude():
     assert find_absolute_magnitude(10, 1) == pytest.approx(15, rel=1e-3), "An apparent magnitude of 10 and distance of 1 should yield an absolute magnitude of ~15"
-    assert find_absolute_magnitude(11.1301970258, 1.3) == pytest.approx(15.56, rel=1e-3), "An apparent magnitude of 11.1302 and distance of 1.3 should yield an absolute magnitude of ~15.56" # Apparent magnitude and distance of Proxima Centauri
+    assert find_absolute_magnitude(11.1301970258, 1.2787) == pytest.approx(15.5964, rel=1e-3), "An apparent magnitude of 11.1302 and distance of 1.2787 should yield an absolute magnitude of ~15.5964" # Apparent magnitude and distance of Proxima Centauri
     assert find_absolute_magnitude(100, 10) == pytest.approx(100, rel=1e-3), "An apparent magnitude of 100 and distance of 10 should yield an absolute magnitude of ~100"
 
 def test_find_luminosity():
@@ -46,3 +46,23 @@ def test_physics_type_safety(invalid_val):
         find_luminosity(invalid_val)
     with pytest.raises(ValueError):
         estimate_temperature(invalid_val)
+
+def test_full_physics_pipeline_proxima():
+    # Real Proxima Centauri parameters
+    parallax = 768.0665
+    apparent_mag = 11.13
+    b_mag = 12.95 # Note: These use Johnson B-V rather than Gaia
+    v_mag = 11.13 # Note: These use Johnson B-V rather than Gaia
+
+    distance = find_distance(parallax)
+    absolute_mag = find_absolute_magnitude(apparent_mag, distance)
+    luminosity = find_luminosity(absolute_mag)
+
+    colour_index = find_colour_index(b_mag, v_mag)
+    temperature = estimate_temperature(colour_index)
+
+    assert distance == pytest.approx(1.3019, rel=1e-3)
+    assert colour_index == pytest.approx(1.82, rel=1e-3)
+    assert temperature == pytest.approx(3368.0, rel=1e-3)
+    assert absolute_mag == pytest.approx(15.5570, rel=1e-3)
+    assert luminosity == pytest.approx(5.1192e-05, rel=1e-3)
