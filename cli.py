@@ -3,6 +3,7 @@ import random
 from src.logger import log
 import src.logger as logger
 from src.plotting import plot_hr_diagram
+from src.database import fetch_number, delete_db
 
 
 def ask(msg, valid_options=None):
@@ -11,7 +12,7 @@ def ask(msg, valid_options=None):
     answer = ""
     while not valid:
         answer = input("> ")
-        if answer.lower() in valid_options:
+        if not valid_options or answer.lower() in valid_options:
             valid = True
         else:
             print("Invalid answer, try again")
@@ -62,7 +63,7 @@ def inspect(gaia_id, verbose):
 @click.option("-v", "--verbose", is_flag=True, help="Print debug logs to the terminal.")
 def fetch_bulk(limit, verbose):
     """Pull stars from Gaia database for download to local DB"""
-    # TODO: Add filters
+    # TODO: Add filters (eg, strict, custom etc)
     from src.pipeline import run_ingestion
     from src.database import initialize_database
     initialize_database()
@@ -72,12 +73,13 @@ def fetch_bulk(limit, verbose):
 @cli.command()
 @click.option("-l", "--limit", type=int, default=10000, help="Number of stars to show on plot")
 @click.option("-s", "--style", type=str, default="colour", help="Style of plot: colour, density")
+@click.option("-a", "--annotations", is_flag=True, help="*EXPERIMENTAL* Include lines and text to show each part")
 @click.option("--save", type=str, is_flag=False, flag_value="default", default=None, help="Save plot to file, pass without value to generate filename")
-def hr_diagram(limit, style, save):
+def hr_diagram(limit, style, annotations, save):
     """Shows a HR diagram using stars from local DB"""
     print(save)
     if save is None:
-        plot_hr_diagram(limit, style)
+        plot_hr_diagram(limit=limit, style=style, annotations=annotations)
     elif save == "default":
         filename = f"HR_{limit}_{random.randint(1,1000)}"
         print(filename)
@@ -86,15 +88,25 @@ def hr_diagram(limit, style, save):
         plot_hr_diagram(limit, style, save)
 
 @cli.command()
-@click.option("-v", "--verbose", required=False, help="Print debug logs to the terminal.")
-def test(v):
-    print(v)
+def purge():
+    total = fetch_number()
+    if total == 0:
+        print("Database is already empty")
+        return
+    answer = ask(f"To delete database with stars, please type `{total}`")
+    if answer.strip() != str(total):
+        print("Input did not match expected text, try again")
+        return
+    delete_db()
+
+
 
 if __name__ == "__main__":
     cli()
 
 # TODO: Sync star - saves / updates star to DB
+# TODO: Scrape stars - scrapes stars from Gaia - filters, amount
 # TODO: List stars - prints clean table of current stars - --sort --limit
-# TODO: HR Diagram - opens matplotlib HR diagram - --save (save image as png)
+# TODO: HR Diagram - openam - --save (save image as png)
 # TODO: Stats - prints fun stats
 # TODO: Purge - deletes DB

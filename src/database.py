@@ -141,6 +141,33 @@ def fetch_stars_batch(source_ids=None, fields=None, limit=None):
     finally:
         connection.close()
 
+def fetch_number():
+    """Returns the number of stars in the database"""
+    connection = sqlite3.connect(config.DATABASE_PATH)
+    cursor = connection.cursor()
+    cursor.execute("SELECT COUNT(*) FROM stars")
+    count = cursor.fetchone()[0]
+    connection.close()
+    return count
+
+def delete_db():
+    """Deletes data in local database. Returns True on success, otherwise False"""
+    connection = None
+    try:
+        connection = sqlite3.connect(config.DATABASE_PATH)
+        cursor = connection.cursor()
+
+        cursor.execute("DELETE FROM stars")
+        connection.commit()
+        log("All data deleted from DB successfully")
+        return True
+    except sqlite3.Error as e:
+        log(f"Could not delete DB data: {e}", level="error")
+        return False
+    finally:
+        if connection:
+            connection.close()
+
 if __name__ == "__main__":
     initialize_database()
 

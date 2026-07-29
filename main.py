@@ -18,7 +18,7 @@ if __name__ == "__main__":
     initialize_database()
     log("Database initialized successfully")
 
-    stars_to_fetch = 100000
+    stars_to_fetch = 150_000
     run_ingestion(stars_to_fetch)
 
 

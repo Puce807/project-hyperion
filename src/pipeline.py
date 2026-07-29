@@ -25,6 +25,7 @@ def process_star(row):
         dec = safe_float(row["dec"])
         parallax = safe_float(row["parallax"])
         parallax_error = safe_float(row["parallax_error"])
+        parallax_over_error = safe_float(row["parallax_over_error"])
         ruwe = safe_float(row["ruwe"])
         excess_noise = safe_float(row["astrometric_excess_noise"])
         g_mag = safe_float(row["phot_g_mean_mag"])
@@ -39,6 +40,7 @@ def process_star(row):
         radial_velocity_error = safe_float(row["radial_velocity_error"])
         pmra = safe_float(row["pmra"])
         pmdec = safe_float(row["pmdec"])
+        teff_gspphot = safe_float(row["teff_gspphot"])
 
         phot_g_n_obs = int(row["phot_g_n_obs"]) if row["phot_g_n_obs"] not in (None, "NOT_AVAILABLE") else None
         phot_bp_n_obs = int(row["phot_bp_n_obs"]) if row["phot_bp_n_obs"] not in (None, "NOT_AVAILABLE") else None
@@ -67,6 +69,7 @@ def process_star(row):
         "dec": dec,
         "parallax": parallax,
         "parallax_error": parallax_error,
+        "parallax_over_error": parallax_error,
         "ruwe": ruwe,
         "astrometric_excess_noise": excess_noise,
         "phot_g_mean_mag": g_mag,
@@ -86,6 +89,7 @@ def process_star(row):
         "phot_g_n_obs": phot_g_n_obs,
         "phot_bp_n_obs": phot_bp_n_obs,
         "phot_rp_n_obs": phot_rp_n_obs,
+        "teff_gspphot": teff_gspphot,
 
         # Computed fields
         "distance": distance,
@@ -95,7 +99,8 @@ def process_star(row):
         "luminosity": luminosity
     }
 
-    # NOTE: When changing this file, ensure fields in initialise_database (src/database.py) correlate
+    # TODO: Clean this up!
+    # NOTE: When changing this file, ensure fields in initialise_database (config.py) correlate
 
     return db_record
 
@@ -161,7 +166,7 @@ def run_ingestion(limit: int):
             elapsed = time.time() - start_time
             per_star = elapsed / current_star_num
             time_estimate = (total - current_star_num) * per_star
-            log(f"Completed {current_star_num}/{total} stars ({round(current_star_num / total, 2)}%) Est. {format_time(time_estimate)} remaining")
+            log(f"Completed {current_star_num}/{total} stars ({round(current_star_num / total, 4)*100}%) Est. {format_time(time_estimate)} remaining")
 
     elapsed_time = time.time() - start_time
     per_star_latency = elapsed_time / total if total > 0 else 0

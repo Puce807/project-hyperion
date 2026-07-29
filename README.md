@@ -17,7 +17,7 @@ Project Hyperion aims to be a self-hosted astrophysics pipeline designed to proc
    - [x] Logging
    - [ ] Quality filters (RUWE, parallax error)
    - [ ] HR Diagram to show results
-   - [ ] Testing
+   - [x] Physics Calculation Testing
    - [ ] Add current results to README (hr diagram)
    - [ ] Docs
 
@@ -29,6 +29,7 @@ Project Hyperion aims to be a self-hosted astrophysics pipeline designed to proc
    - [ ] Interactive diagrams via Plotly or Matplotlib
    - [ ] Variable star identification
    - [ ] Binary star identification
+   - [ ] Further Testing
 
 3. Optimisation
    - [ ] Fully autonomous processing
