@@ -1,9 +1,14 @@
 import click
 import random
+
+from PIL.JpegPresets import presets
+
 from src.logger import log
 import src.logger as logger
+from config import FIELD_PRESETS
 from src.plotting import plot_hr_diagram
-from src.database import fetch_number, delete_db
+from src.database import fetch_number, delete_db, fetch_stars_batch
+from tabulate import tabulate
 
 
 def ask(msg, valid_options=None):
@@ -17,6 +22,11 @@ def ask(msg, valid_options=None):
         else:
             print("Invalid answer, try again")
     return answer
+
+def parse_csv(ctx, param, value):
+    if value:
+        return [item.strip() for item in value.split(',')]
+    return []
 
 @click.group()
 def cli():
@@ -89,6 +99,7 @@ def hr_diagram(limit, style, annotations, save):
 
 @cli.command()
 def purge():
+    """Deletes all data in local database"""
     total = fetch_number()
     if total == 0:
         print("Database is already empty")
@@ -99,14 +110,29 @@ def purge():
         return
     delete_db()
 
+@cli.command()
+@click.option("-l", "--limit", type=int, default=10, help="Number of stars to show in table")
+@click.option("-f", "--fields", type=str, callback=parse_csv, help="Define custom fields to include")
+@click.option("-p", "--preset",
+              type=click.Choice(["default", "quality", "photometry", "astrometry", "variability", "all"]),
+              default="default", help="Select a field group preset")
+def list_stars(limit, fields, preset):
+    """Prints a table of stars saved locally to DB"""
+    # TODO: Add sorting and filtering
+    if fields: selected_fields = fields
+    else:
+        selected_fields = FIELD_PRESETS[preset]
+    results = fetch_stars_batch(limit=limit, fields=selected_fields)
+    if len(results) == 0:
+        print("No stars found in database")
+        return
+    print(tabulate(results, headers=selected_fields))
+
 
 
 if __name__ == "__main__":
     cli()
 
 # TODO: Sync star - saves / updates star to DB
-# TODO: Scrape stars - scrapes stars from Gaia - filters, amount
 # TODO: List stars - prints clean table of current stars - --sort --limit
-# TODO: HR Diagram - openam - --save (save image as png)
 # TODO: Stats - prints fun stats
-# TODO: Purge - deletes DB
