@@ -10,6 +10,7 @@ from src.plotting import plot_hr_diagram
 from src.database import fetch_number, delete_db, fetch_stars_batch
 from tabulate import tabulate
 
+# TODO: Fix verboseness
 
 def ask(msg, valid_options=None):
     print(msg)
@@ -87,15 +88,15 @@ def fetch_bulk(limit, verbose):
 @click.option("--save", type=str, is_flag=False, flag_value="default", default=None, help="Save plot to file, pass without value to generate filename")
 def hr_diagram(limit, style, annotations, save):
     """Shows a HR diagram using stars from local DB"""
+    # TODO: Fix title formatting + filtering
     print(save)
     if save is None:
         plot_hr_diagram(limit=limit, style=style, annotations=annotations)
     elif save == "default":
-        filename = f"HR_{limit}_{random.randint(1,1000)}"
-        print(filename)
-        plot_hr_diagram(limit, style, filename)
+        filename = f"HR_{limit}_{style.upper()[0]}_{random.randint(1,1000)}"
+        plot_hr_diagram(limit, style, filename, annotations=annotations)
     else:
-        plot_hr_diagram(limit, style, save)
+        plot_hr_diagram(limit, style, save, annotations=annotations)
 
 @cli.command()
 def purge():

@@ -107,6 +107,8 @@ def process_star(row):
 def format_time(seconds):
     if seconds == 0:
         return "0 seconds"
+    if seconds <= 1:
+        return f"{round(seconds, 2)} seconds"
 
     intervals = (
         ('days', 86400),

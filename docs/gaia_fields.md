@@ -1,4 +1,4 @@
-# Gaia Fields
+# Gaia Fields Docs
 
 This doc explains what each of the fields collected from the Gaia database are and their use in the pipeline.
 

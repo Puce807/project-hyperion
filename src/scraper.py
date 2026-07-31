@@ -22,7 +22,6 @@ GAIA_QUALITY_FILTERS = """
     AND ruwe <= 1.4
 """
 
-
 def execute_gaia_query(adql_query: str):
     """Helper function to handle job execution"""
     try:

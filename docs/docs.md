@@ -1,3 +1,4 @@
-# Docs
+# Documentation
 
-[Gaia Fields](./gaia_fields.md)
+- [Gaia Fields](./gaia_fields.md)
+- [CLI Docs](./cli.md)
