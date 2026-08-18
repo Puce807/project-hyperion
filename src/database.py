@@ -23,6 +23,21 @@ def initialize_database():
                        UNIQUE (catalogue, catalogue_id)
                    )
                    """)
+    cursor.execute("""
+                   CREATE TABLE IF NOT EXISTS gaia_data (
+                        hyperion_id TEXT PRIMARY KEY,
+                        gaia_id TEXT NOT NULL,
+                        parallax REAL,
+                        parallax_error REAL,
+                        parallax_over_error REAL,
+                        phot_bp_mean_mag REAL,
+                        phot_rp_mean_mag REAL,
+                        phot_g_mean_mag REAL,
+                        bp_rp REAL,
+                        
+                        FOREIGN KEY (hyperion_id) REFERENCES stars(id)
+                   )
+                   """)
 
     log(f"Database verified at {config.DATABASE_PATH}")
     connection.commit()
@@ -35,19 +50,30 @@ def add_star(star: Star):
     cursor = connection.cursor()
 
     try:
-        # Stars Database
+        # Stars Table
         cursor.execute(
             "INSERT INTO stars (id, ra, dec) VALUES (?, ?, ?)",
             (star.id, star.ra, star.dec)
         )
-        # Source IDs Database
+        # Source IDs Table
         for source_id in star.source_ids:
             cursor.execute(
                 "INSERT INTO source_ids (hyperion_id, catalogue, catalogue_id) VALUES (?, ?, ?)",
                 (star.id, source_id.catalogue, source_id.id)
             )
-            print("AFTER INSERT")
-            print(cursor.lastrowid)
+            gaia_data = star.gaia_data
+            if "Gaia" == source_id.catalogue and gaia_data is not None:
+                # Gaia Data Table
+                cursor.execute(
+                    """INSERT INTO gaia_data (hyperion_id, gaia_id,
+                                              parallax, parallax_error, parallax_over_error,
+                                              phot_bp_mean_mag, phot_rp_mean_mag, phot_g_mean_mag, "bp_rp")
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (star.id, source_id.id,
+                     gaia_data.parallax, gaia_data.parallax_error, gaia_data.parallax_over_error,
+                     gaia_data.phot_bp_mean_mag, gaia_data.phot_rp_mean_mag, gaia_data.phot_g_mean_mag,
+                     gaia_data.bp_rp)
+                )
         connection.commit()
     except sqlite3.IntegrityError as e:
         #log(f"Target ID {star.id} already exists in local database. Skipping", level="warn")
@@ -135,6 +161,7 @@ def delete_db():
 
         cursor.execute("DELETE FROM stars")
         cursor.execute("DELETE FROM source_ids")
+        cursor.execute("DELETE FROM gaia_data")
         connection.commit()
         log("All data deleted from DB successfully")
         return True
