@@ -3,6 +3,7 @@ import sqlite3
 import os
 import config
 from src.logger import log
+from src.models import Star
 
 def initialize_database():
     """Initialises database by creating file and adding missing columns."""
@@ -11,73 +12,59 @@ def initialize_database():
     cursor = connection.cursor()
 
     cursor.execute("PRAGMA journal_mode=WAL;")
-    cursor.execute("CREATE TABLE IF NOT EXISTS stars (id INTEGER PRIMARY KEY)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS stars (id TEXT PRIMARY KEY)")
     log(f"Database core file verified at {config.DATABASE_PATH}")
 
-    core_gaia_columns = config.GAIA_FIELDS_LIST
+    #core_gaia_columns = config.GAIA_FIELDS_LIST
 
-    integer_fields = ["phot_g_n_obs", "phot_bp_n_obs", "phot_rp_n_obs"]
-    text_fields = ["phot_variable_flag"]
-    boolean_fields = ["has_epoch_photometry"]
+    #integer_fields = ["phot_g_n_obs", "phot_bp_n_obs", "phot_rp_n_obs"]
+    #text_fields = ["phot_variable_flag"]
+    #boolean_fields = ["has_epoch_photometry"]
 
-    calculated_columns = [
-        "absolute_magnitude REAL",
-        "distance REAL",
-        "colour_index REAL",
-        "temperature REAL",
-        "luminosity REAL"
-    ]
+    #calculated_columns = [
+    #    "absolute_magnitude REAL",
+    #    "distance REAL",
+    #    "colour_index REAL",
+    #    "temperature REAL",
+    #    "luminosity REAL"
+    #]
 
-    columns = core_gaia_columns + calculated_columns
+    #columns = core_gaia_columns + calculated_columns
+    columns = ["ra", "dec"]
     log(f"Verifying {len(columns)} database schema columns...")
 
-    for field_name in config.GAIA_FIELDS_LIST:
-        if field_name == "source_id":
-            continue
-
-        if field_name in integer_fields:
-            col_definition = f"{field_name} INTEGER"
-        elif field_name in text_fields:
-            col_definition = f"{field_name} TEXT"
-        elif field_name in boolean_fields:
-            col_definition = f"{field_name} INTEGER"
-        else:
-            col_definition = f"{field_name} REAL"
+    for col in columns:
+        col_def = f"{col} REAL"
 
         try:
-            cursor.execute(f"ALTER TABLE stars ADD COLUMN {col_definition};")
-            log(f"Schema updated: Added telemetry column '{field_name}' ({col_definition.split()[1]})", level="INFO")
-        except sqlite3.OperationalError:
-            pass
-
-    for col in calculated_columns:
-        col_name = col.split()[0]
-        try:
-            cursor.execute(f"ALTER TABLE stars ADD COLUMN {col};")
-            log(f"Schema updated: Added column '{col_name}'")
-        except sqlite3.OperationalError:
-            pass
+            cursor.execute(f"ALTER TABLE stars ADD COLUMN {col_def};")
+            log(f"Schema updated: Added telemetry column '{col}' ({col_def.split()[1]})", level="INFO")
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" in str(e):
+                pass
+            else:
+                log(f"Failed database operation: {e}", level="error")
 
     connection.commit()
     connection.close()
     log("Database initialization complete", level="INFO")
 
-def add_star(data_dict: dict):
+def add_star(star: Star):
     """Inserts any number of rows into the stars table using a dictionary"""
     connection = sqlite3.connect(config.DATABASE_PATH)
     cursor = connection.cursor()
 
-    columns = ", ".join(data_dict.keys())
-    placeholders = ", ".join(["?"] * len(data_dict))
-    sql = f"INSERT INTO stars ({columns}) VALUES ({placeholders})"
-
     try:
-        cursor.execute(sql, tuple(data_dict.values()))
+        cursor.execute(
+            "INSERT INTO stars (id, ra, dec) VALUES (?, ?, ?)",
+            (star.id, star.ra, star.dec)
+        )
         connection.commit()
-    except sqlite3.IntegrityError:
-        log(f"Target ID {data_dict.get('id')} already exists in local database. Skipping", level="warn")
+    except sqlite3.IntegrityError as e:
+        #log(f"Target ID {star.id} already exists in local database. Skipping", level="warn")
+        log(f"Error for star ID {star.id}: {e}", level="error")
     except Exception as e:
-        log(f"Failed database write operation: {e} Star ({data_dict.get('id')}) not saved", level="error")
+        log(f"Failed database write operation: {e} Star ({star.id}) not saved", level="error")
     finally:
         connection.close()
 

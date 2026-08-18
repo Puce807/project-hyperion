@@ -20,6 +20,7 @@ Project Hyperion aims to be a self-hosted astrophysics pipeline designed to proc
    - [x] Physics Calculation Testing
    - [ ] Add current results to README (hr diagram)
    - [ ] Docs
+   - [ ] Refactor to use dataclasses to allow other data sources
 
 2. Analytics
    - [ ] Web Dashboard (maybe)
