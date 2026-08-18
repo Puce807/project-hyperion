@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.stats import gaussian_kde
 import config
-from src.database import fetch_stars_batch
+from src.database import fetch_rows_batch
 from matplotlib.patches import Rectangle
 
 def plot_hr_diagram(limit=5000, style="density", filepath="", annotations=False):
@@ -11,7 +11,7 @@ def plot_hr_diagram(limit=5000, style="density", filepath="", annotations=False)
 
     x = []
     y = []
-    stars = fetch_stars_batch(fields=fields, limit=limit)
+    stars = fetch_rows_batch(fields=fields, limit=limit)
     x, y = np.array(list(zip(*stars)))
 
     if x.size == 0:

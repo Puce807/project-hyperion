@@ -1,13 +1,10 @@
 import click
 import random
-
-from PIL.JpegPresets import presets
-
 from src.logger import log
 import src.logger as logger
 from config import FIELD_PRESETS
 from src.plotting import plot_hr_diagram
-from src.database import fetch_number, delete_db, fetch_stars_batch
+from src.database import fetch_number, delete_db, fetch_rows_batch
 from tabulate import tabulate
 
 # TODO: Fix verboseness
@@ -114,16 +111,24 @@ def purge():
 @cli.command()
 @click.option("-l", "--limit", type=int, default=10, help="Number of stars to show in table")
 @click.option("-f", "--fields", type=str, callback=parse_csv, help="Define custom fields to include")
-@click.option("-p", "--preset",
-              type=click.Choice(["default", "quality", "photometry", "astrometry", "variability", "all"]),
-              default="default", help="Select a field group preset")
-def list_stars(limit, fields, preset):
+@click.option("-t", "--table",
+              type=click.Choice(["stars", "source_ids", "gaia_data"]),
+              default="stars", help="Select table")
+def list_data(limit, fields, table):
     """Prints a table of stars saved locally to DB"""
     # TODO: Add sorting and filtering
-    if fields: selected_fields = fields
+    default_fields = {
+        "stars": ["id", "ra", "dec"],
+        "source_ids": ["hyperion_id", "catalogue", "catalogue_id"],
+        "gaia_data": ["hyperion_id", "gaia_id",
+                      "parallax", "parallax_error", "parallax_over_error",
+                      "phot_bp_mean_mag", "phot_rp_mean_mag", "phot_g_mean_mag", "bp_rp"]}
+    if fields:
+        selected_fields = fields
     else:
-        selected_fields = FIELD_PRESETS[preset]
-    results = fetch_stars_batch(limit=limit, fields=selected_fields)
+        selected_fields = default_fields[table]
+    # TODO: Add docs
+    results = fetch_rows_batch(limit=limit, fields=selected_fields, table=table)
     if len(results) == 0:
         print("No stars found in database")
         return
