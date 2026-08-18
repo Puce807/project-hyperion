@@ -12,39 +12,19 @@ def initialize_database():
     cursor = connection.cursor()
 
     cursor.execute("PRAGMA journal_mode=WAL;")
-    cursor.execute("CREATE TABLE IF NOT EXISTS stars (id TEXT PRIMARY KEY)")
-    log(f"Database core file verified at {config.DATABASE_PATH}")
+    cursor.execute("CREATE TABLE IF NOT EXISTS stars (id TEXT PRIMARY KEY, ra REAL NOT NULL, dec REAL NOT NULL)")
+    cursor.execute("""
+                   CREATE TABLE IF NOT EXISTS source_ids (
+                       hyperion_id  TEXT NOT NULL,
+                       catalogue    TEXT NOT NULL,
+                       catalogue_id TEXT NOT NULL,
 
-    #core_gaia_columns = config.GAIA_FIELDS_LIST
+                       FOREIGN KEY (hyperion_id) REFERENCES stars (id),
+                       UNIQUE (catalogue, catalogue_id)
+                   )
+                   """)
 
-    #integer_fields = ["phot_g_n_obs", "phot_bp_n_obs", "phot_rp_n_obs"]
-    #text_fields = ["phot_variable_flag"]
-    #boolean_fields = ["has_epoch_photometry"]
-
-    #calculated_columns = [
-    #    "absolute_magnitude REAL",
-    #    "distance REAL",
-    #    "colour_index REAL",
-    #    "temperature REAL",
-    #    "luminosity REAL"
-    #]
-
-    #columns = core_gaia_columns + calculated_columns
-    columns = ["ra", "dec"]
-    log(f"Verifying {len(columns)} database schema columns...")
-
-    for col in columns:
-        col_def = f"{col} REAL"
-
-        try:
-            cursor.execute(f"ALTER TABLE stars ADD COLUMN {col_def};")
-            log(f"Schema updated: Added telemetry column '{col}' ({col_def.split()[1]})", level="INFO")
-        except sqlite3.OperationalError as e:
-            if "duplicate column name" in str(e):
-                pass
-            else:
-                log(f"Failed database operation: {e}", level="error")
-
+    log(f"Database verified at {config.DATABASE_PATH}")
     connection.commit()
     connection.close()
     log("Database initialization complete", level="INFO")
@@ -55,10 +35,19 @@ def add_star(star: Star):
     cursor = connection.cursor()
 
     try:
+        # Stars Database
         cursor.execute(
             "INSERT INTO stars (id, ra, dec) VALUES (?, ?, ?)",
             (star.id, star.ra, star.dec)
         )
+        # Source IDs Database
+        for source_id in star.source_ids:
+            cursor.execute(
+                "INSERT INTO source_ids (hyperion_id, catalogue, catalogue_id) VALUES (?, ?, ?)",
+                (star.id, source_id.catalogue, source_id.id)
+            )
+            print("AFTER INSERT")
+            print(cursor.lastrowid)
         connection.commit()
     except sqlite3.IntegrityError as e:
         #log(f"Target ID {star.id} already exists in local database. Skipping", level="warn")
@@ -145,6 +134,7 @@ def delete_db():
         cursor = connection.cursor()
 
         cursor.execute("DELETE FROM stars")
+        cursor.execute("DELETE FROM source_ids")
         connection.commit()
         log("All data deleted from DB successfully")
         return True

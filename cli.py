@@ -105,7 +105,7 @@ def purge():
     if total == 0:
         print("Database is already empty")
         return
-    answer = ask(f"To delete database with stars, please type `{total}`")
+    answer = ask(f"To delete database, please type `{total}`")
     if answer.strip() != str(total):
         print("Input did not match expected text, try again")
         return

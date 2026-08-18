@@ -20,7 +20,7 @@ def process_star(row):
     """Takes raw data returned from Gaia query and constructs star dataclass."""
     try:
         # TODO: Assumes Gaia CHANGE
-        source_id = SourceID(catalogue="Gaia", id=row["source_id"])
+        source_id = SourceID(catalogue="Gaia", id=str(row["source_id"]))
         # TODO: Check if Gaia source ID is in table before creating new ID
     except Exception as e:
         log(f"Failed to parse critical field `source_id` from row: {e}", level="error")
