@@ -1,10 +1,13 @@
 from astroquery.gaia import Gaia
+from astroquery.ipac.irsa import Irsa
 from src.logger import log
 import config
+import requests
 
 Gaia.MAIN_GAIA_TABLE = config.GAIA_TABLE
 
-GAIA_QUALITY_FILTERS = """
+# TODO: Move
+OLD_GAIA_QUALITY_FILTERS = """
     parallax IS NOT NULL
     AND parallax_error IS NOT NULL
     AND parallax_over_error IS NOT NULL
@@ -21,6 +24,21 @@ GAIA_QUALITY_FILTERS = """
     AND phot_rp_mean_flux_over_error > 20
     AND ruwe <= 1.4
 """
+
+GAIA_QUALITY_FILTERS = """
+    parallax IS NOT NULL
+    AND parallax_error IS NOT NULL
+    AND parallax_over_error IS NOT NULL
+    AND phot_g_mean_mag IS NOT NULL
+    AND phot_bp_mean_mag IS NOT NULL
+    AND phot_rp_mean_mag IS NOT NULL
+    AND parallax > 0
+"""
+
+ZTF_QUALITY_FILTERS = """
+    nobs IS NOT NULL
+    AND nobs > 20
+    AND chisq IS NOT NULL"""
 
 def execute_gaia_query(adql_query: str):
     """Helper function to handle job execution"""
@@ -45,8 +63,8 @@ def execute_gaia_query(adql_query: str):
         log(f"Could not execute Gaia query: {e}", level="error")
         return None
 
-def fetch_bulk(limit: int=1):
-    """Fetches a sample of stars for testing"""
+def fetch_bulk_gaia(limit: int=1):
+    """Fetches a sample of stars from the Gaia catalogue"""
     query = f"""
         SELECT TOP {limit}
             {config.GAIA_FIELDS}
@@ -57,8 +75,29 @@ def fetch_bulk(limit: int=1):
         """
     return execute_gaia_query(query)
 
-def fetch_data(limit):
-    results = fetch_bulk(limit)
+def fetch_bulk_ztf(limit: int=1):
+    """Fetches a sample of stars from the ZTF catalogue"""
+    from astropy.coordinates import SkyCoord
+    import astropy.units as u
+    try:
+        result = Irsa.query_tap(f'''SELECT TOP 1
+                            {config.ZTF_FIELDS}
+                          FROM {config.ZTF_SOURCE}
+                          WHERE {ZTF_QUALITY_FILTERS}
+                          ''')
+    except Exception as e:
+        log(f"Could not execute ZTF tap query: {e}", level="error")
+        return None
+    return result
+
+def fetch_data(limit, source):
+    allowed_sources = ["gaia", "ztf"]
+    if source == "gaia":
+        results = fetch_bulk_gaia(limit)
+    elif source == "ztf":
+        results = fetch_bulk_ztf(limit)
+    else:
+        raise ValueError("source did not match expected.")
     return results
 
 def fetch_individual_star(source_id):

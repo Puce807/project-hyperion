@@ -5,6 +5,7 @@ from src.logger import log
 from src.physics import find_distance, find_luminosity, find_colour_index, find_absolute_magnitude, estimate_temperature
 from config import GAIA_FIELDS_LIST
 from src.models import Star, SourceID,GaiaData
+from src.scraper import fetch_data
 
 def clean_val(val):
     if val in (None, "NOT_AVAILABLE") or str(val).strip() == "":
@@ -77,13 +78,12 @@ def format_time(seconds):
 
 def run_ingestion(limit: int):
     """Orchestrates the downloading, processing, and database storage of stellar data."""
-    from src.scraper import fetch_bulk
     from src.database import add_star
 
     start_time = time.time()
 
     log(f"Initiating bulk retrieval for {limit} targets...", level="INFO")
-    results = fetch_bulk(limit)
+    results = fetch_data(limit=limit, source="gaia")
     total = len(results) if results else 0
 
     if total == 0:

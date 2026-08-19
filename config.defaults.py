@@ -3,7 +3,6 @@ from pathlib import Path
 DATABASE_PATH = Path(__file__).resolve().parent / "data" / "data.db"
 
 GAIA_TABLE = "gaiadr3.gaia_source"
-
 GAIA_FIELDS = """
 source_id, ra, dec, 
 parallax, parallax_error, parallax_over_error, 
@@ -18,3 +17,7 @@ FIELD_PRESETS = {
     "variability": ["id", "phot_g_mean_mag", "phot_g_mean_flux_over_error", "bp_rp", "has_epoch_photometry", "phot_variable_flag"],
     "all": GAIA_FIELDS_LIST
 }
+
+ZTF_SOURCE = ""
+ZTF_FIELDS = """oid, ra, dec, filtercode, nobs, ngoodobs, weightedmeanmag, weightedmagrms, chisq"""
+ZTF_FIELDS_LIST = [field.strip() for field in ZTF_FIELDS.split(",") if field.strip()]
