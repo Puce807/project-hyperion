@@ -70,8 +70,9 @@ def inspect(gaia_id, verbose):
 @click.option("-l", "--limit", type=int, default=1000, help="Number of stars to fetch")
 @click.option("-v", "--verbose", is_flag=True, help="Print debug logs to the terminal.")
 def fetch_bulk(limit, verbose):
-    """Pull stars from Gaia database for download to local DB"""
+    """Pull stars from external database for download to local DB"""
     # TODO: Add filters (eg, strict, custom etc)
+    # TODO: Add source (gaia, ztf)
     from src.pipeline import run_ingestion
     from src.database import initialize_database
     initialize_database()

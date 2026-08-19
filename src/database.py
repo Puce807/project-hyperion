@@ -38,6 +38,21 @@ def initialize_database():
                         FOREIGN KEY (hyperion_id) REFERENCES stars(id)
                    )
                    """)
+    cursor.execute("""
+                   CREATE TABLE IF NOT EXISTS ztf_data
+                   (
+                       hyperion_id TEXT PRIMARY KEY,
+                       ztf_id TEXT NOT NULL,
+                       filtercode REAL,
+                       nobs REAL,
+                       ngoodobs REAL,
+                       weightedmeanmag REAL,
+                       weightedmagrms REAL,
+                       chisq REAL,
+
+                       FOREIGN KEY (hyperion_id) REFERENCES stars (id)
+                   )
+                   """)
 
     log(f"Database verified at {config.DATABASE_PATH}")
     connection.commit()
@@ -62,18 +77,31 @@ def add_star(star: Star):
                 (star.id, source_id.catalogue, source_id.id)
             )
             gaia_data = star.gaia_data
-            if "Gaia" == source_id.catalogue and gaia_data is not None:
+            if "gaia" == source_id.catalogue and gaia_data is not None:
                 # Gaia Data Table
                 cursor.execute(
                     """INSERT INTO gaia_data (hyperion_id, gaia_id,
                                               parallax, parallax_error, parallax_over_error,
-                                              phot_bp_mean_mag, phot_rp_mean_mag, phot_g_mean_mag, "bp_rp")
+                                              phot_bp_mean_mag, phot_rp_mean_mag, phot_g_mean_mag, bp_rp)
                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
                     (star.id, source_id.id,
                      gaia_data.parallax, gaia_data.parallax_error, gaia_data.parallax_over_error,
                      gaia_data.phot_bp_mean_mag, gaia_data.phot_rp_mean_mag, gaia_data.phot_g_mean_mag,
                      gaia_data.bp_rp)
                 )
+            ztf_data = star.ztf_data
+            if "ztf" == source_id.catalogue and ztf_data is not None:
+                # ZTF Data Table
+                cursor.execute(
+                    """INSERT INTO ztf_data (hyperion_id, ztf_id, 
+                                             filtercode, nobs, ngoodobs, 
+                                             weightedmeanmag, weightedmagrms, chisq)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                    (star.id, source_id.id,
+                     ztf_data.filtercode, ztf_data.nobs, ztf_data.ngoodobs,
+                     ztf_data.weightedmeanmag, ztf_data.weightedmagrms, ztf_data.chisq)
+                )
+
         connection.commit()
     except sqlite3.IntegrityError as e:
         #log(f"Target ID {star.id} already exists in local database. Skipping", level="warn")
@@ -162,6 +190,7 @@ def delete_db():
         cursor.execute("DELETE FROM stars")
         cursor.execute("DELETE FROM source_ids")
         cursor.execute("DELETE FROM gaia_data")
+        cursor.execute("DELETE FROM ztf_data")
         connection.commit()
         log("All data deleted from DB successfully")
         return True

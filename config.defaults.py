@@ -2,6 +2,8 @@ from pathlib import Path
 
 DATABASE_PATH = Path(__file__).resolve().parent / "data" / "data.db"
 
+allowed_sources = ["ztf", "gaia"]
+
 GAIA_TABLE = "gaiadr3.gaia_source"
 GAIA_FIELDS = """
 source_id, ra, dec, 

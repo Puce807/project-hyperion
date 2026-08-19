@@ -15,6 +15,16 @@ class GaiaData:
     phot_rp_mean_mag: float | None
     phot_g_mean_mag: float | None
     bp_rp: float | None
+# TODO: Add number of observations to GaiaData
+
+@dataclass
+class ZTFData:
+    filtercode: float | None
+    nobs: int | None
+    ngoodobs: float | None
+    weightedmeanmag: float | None
+    weightedmagrms: float | None
+    chisq: float | None
 
 @dataclass
 class Star:
@@ -23,4 +33,6 @@ class Star:
     dec: float
     source_ids:  list[SourceID]
     gaia_data: GaiaData | None
+    ztf_data: ZTFData | None
+
 

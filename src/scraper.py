@@ -79,8 +79,9 @@ def fetch_bulk_ztf(limit: int=1):
     """Fetches a sample of stars from the ZTF catalogue"""
     from astropy.coordinates import SkyCoord
     import astropy.units as u
+    # TODO NEXT: Ensure column names are correct
     try:
-        result = Irsa.query_tap(f'''SELECT TOP 1
+        result = Irsa.query_tap(f'''SELECT TOP {limit}
                             {config.ZTF_FIELDS}
                           FROM {config.ZTF_SOURCE}
                           WHERE {ZTF_QUALITY_FILTERS}
@@ -91,7 +92,6 @@ def fetch_bulk_ztf(limit: int=1):
     return result
 
 def fetch_data(limit, source):
-    allowed_sources = ["gaia", "ztf"]
     if source == "gaia":
         results = fetch_bulk_gaia(limit)
     elif source == "ztf":
