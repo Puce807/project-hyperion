@@ -43,7 +43,7 @@ def initialize_database():
                    (
                        hyperion_id TEXT PRIMARY KEY,
                        ztf_id TEXT NOT NULL,
-                       filtercode REAL,
+                       filtercode TEXT,
                        nobs REAL,
                        ngoodobs REAL,
                        weightedmeanmag REAL,
@@ -182,15 +182,18 @@ def fetch_number():
 
 def delete_db():
     """Deletes data in local database. Returns True on success, otherwise False"""
+    # TODO: make this work more seemlessly so everytime you add a new table you don't need to add to this
     connection = None
     try:
         connection = sqlite3.connect(config.DATABASE_PATH)
         cursor = connection.cursor()
 
-        cursor.execute("DELETE FROM stars")
-        cursor.execute("DELETE FROM source_ids")
-        cursor.execute("DELETE FROM gaia_data")
-        cursor.execute("DELETE FROM ztf_data")
+        tables = ["stars", "source_ids", "gaia_data", "ztf_data"]
+
+        for table in tables:
+            cursor.execute(f"DELETE FROM {table}")
+            cursor.execute(f"DROP TABLE IF EXISTS {table}")
+
         connection.commit()
         log("All data deleted from DB successfully")
         return True

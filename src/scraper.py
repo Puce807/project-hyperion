@@ -38,7 +38,8 @@ GAIA_QUALITY_FILTERS = """
 ZTF_QUALITY_FILTERS = """
     nobs IS NOT NULL
     AND nobs > 20
-    AND chisq IS NOT NULL"""
+    AND chisq IS NOT NULL
+    AND filtercode IS NOT NULL"""
 
 def execute_gaia_query(adql_query: str):
     """Helper function to handle job execution"""

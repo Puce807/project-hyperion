@@ -19,7 +19,7 @@ class GaiaData:
 
 @dataclass
 class ZTFData:
-    filtercode: float | None
+    filtercode: str | None
     nobs: int | None
     ngoodobs: float | None
     weightedmeanmag: float | None

@@ -11,7 +11,7 @@ from src.database import add_star
 def clean_val(val):
     if val in (None, "NOT_AVAILABLE") or str(val).strip() == "":
         return None
-    if isinstance(val, bool):
+    if isinstance(val, bool) or isinstance(val, str):
         return val
     try:
         return float(val)
@@ -101,6 +101,7 @@ def run_ingestion(limit: int):
 
     log(f"Initiating bulk retrieval for {limit} targets...", level="INFO")
     results = fetch_data(limit=limit, source=DATA_SOURCE)
+    network_time = time.time() - start_time
     total = len(results) if results else 0
 
     if total == 0:
@@ -138,3 +139,4 @@ def run_ingestion(limit: int):
 
     log(f"Ingestion complete. Successfully committed {success_count}/{total} records to database. ", level="CLI")
     log(f"Total time: {elapsed_time:.2f}s | Multi-target average: {per_star_latency:.4f}s per star.", level="CLI")
+    log(f"Time breakdown: Network {network_time:.2f}s | Processing: {(elapsed_time-network_time):.2f}s", level="CLI")

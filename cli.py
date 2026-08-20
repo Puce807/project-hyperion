@@ -97,12 +97,21 @@ def hr_diagram(limit, style, annotations, save):
         plot_hr_diagram(limit, style, save, annotations=annotations)
 
 @cli.command()
-def purge():
-    """Deletes all data in local database"""
+@click.option("-y", "--assume-yes", is_flag=True, help="Skip confirmation")
+def purge(assume_yes):
+    """Deletes all data in local database and drops tables"""
+    # TODO: Add flags to only purge specific table
+    if assume_yes:
+        delete_db()
+        return
     total = fetch_number()
     if total == 0:
-        print("Database is already empty")
-        return
+        answer = ask("Database is already empty, continue deletion anyway? [y/n]",valid_options=["y", "n"])
+        if answer == "n":
+            return
+        else:
+            delete_db()
+            return
     answer = ask(f"To delete database, please type `{total}`")
     if answer.strip() != str(total):
         print("Input did not match expected text, try again")
@@ -143,3 +152,4 @@ if __name__ == "__main__":
 # TODO: Sync star - saves / updates star to DB
 # TODO: List stars - prints clean table of current stars - --sort --limit
 # TODO: Stats - prints fun stats
+# TODO: Remove - remove specific object
