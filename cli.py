@@ -2,7 +2,7 @@ import click
 import random
 from src.logger import log
 import src.logger as logger
-from config import FIELD_PRESETS
+import config
 from src.plotting import plot_hr_diagram
 from src.database import fetch_number, delete_db, fetch_rows_batch
 from tabulate import tabulate
@@ -98,31 +98,32 @@ def hr_diagram(limit, style, annotations, save):
 
 @cli.command()
 @click.option("-y", "--assume-yes", is_flag=True, help="Skip confirmation")
-def purge(assume_yes):
+@click.option("-t", "--table",
+              type=click.Choice(config.SAFE_TABLES),
+              default="all", help="Select table")
+def purge(assume_yes, table):
     """Deletes all data in local database and drops tables"""
-    # TODO: Add flags to only purge specific table
-    if assume_yes:
-        delete_db()
-        return
-    total = fetch_number()
-    if total == 0:
-        answer = ask("Database is already empty, continue deletion anyway? [y/n]",valid_options=["y", "n"])
-        if answer == "n":
-            return
+    # TODO: Purge by filter
+    if not assume_yes:
+        total = fetch_number(table)
+        if total == 0:
+            answer = ask("Database is already empty, continue deletion anyway? [y/n]",valid_options=["y", "n"])
+            if answer == "n":
+                return
+            else:
+                pass
         else:
-            delete_db()
-            return
-    answer = ask(f"To delete database, please type `{total}`")
-    if answer.strip() != str(total):
-        print("Input did not match expected text, try again")
-        return
-    delete_db()
+            answer = ask(f"To delete database, please type `{total}`")
+            if answer.strip() != str(total):
+                print("Input did not match expected text, try again")
+                return
+    delete_db(table)
 
 @cli.command()
 @click.option("-l", "--limit", type=int, default=10, help="Number of stars to show in table")
 @click.option("-f", "--fields", type=str, callback=parse_csv, help="Define custom fields to include")
 @click.option("-t", "--table",
-              type=click.Choice(["stars", "source_ids", "gaia_data"]),
+              type=click.Choice(config.TABLES),
               default="stars", help="Select table")
 def list_data(limit, fields, table):
     """Prints a table of stars saved locally to DB"""

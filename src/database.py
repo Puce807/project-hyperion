@@ -171,28 +171,38 @@ def fetch_rows_batch(source_ids=None, fields=None, limit=None, table="stars"):
     finally:
         connection.close()
 
-def fetch_number():
+def fetch_number(table="stars"):
     """Returns the number of stars in the database"""
     connection = sqlite3.connect(config.DATABASE_PATH)
     cursor = connection.cursor()
-    cursor.execute("SELECT COUNT(*) FROM stars")
+    try:
+        cursor.execute(f"SELECT COUNT(*) FROM {table}")
+    except Exception as e:
+        log(f"SQL error: {e}", level="error")
     count = cursor.fetchone()[0]
     connection.close()
     return count
 
-def delete_db():
+def delete_db(to_delete="all"):
     """Deletes data in local database. Returns True on success, otherwise False"""
     # TODO: make this work more seemlessly so everytime you add a new table you don't need to add to this
     connection = None
     try:
+        if to_delete == "all":
+            pass
+        elif to_delete not in config.TABLES:
+            log(f"Could not delete table {to_delete}, name unrecognised", level="error")
+            return False
+        elif to_delete not in config.SAFE_TABLES:
+            log(f"Deleting table {to_delete} WILL likely cause issues as other tables depend on it", level="warn")
+
         connection = sqlite3.connect(config.DATABASE_PATH)
         cursor = connection.cursor()
 
-        tables = ["stars", "source_ids", "gaia_data", "ztf_data"]
-
-        for table in tables:
-            cursor.execute(f"DELETE FROM {table}")
-            cursor.execute(f"DROP TABLE IF EXISTS {table}")
+        for table in config.TABLES:
+            if to_delete == "all" or table == to_delete:
+                cursor.execute(f"DELETE FROM {table}")
+                cursor.execute(f"DROP TABLE IF EXISTS {table}")
 
         connection.commit()
         log("All data deleted from DB successfully")

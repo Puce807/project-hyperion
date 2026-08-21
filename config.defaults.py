@@ -23,3 +23,6 @@ FIELD_PRESETS = {
 ZTF_SOURCE = ""
 ZTF_FIELDS = """oid, ra, dec, filtercode, nobs, ngoodobs, weightedmeanmag, weightedmagrms, chisq"""
 ZTF_FIELDS_LIST = [field.strip() for field in ZTF_FIELDS.split(",") if field.strip()]
+
+TABLES = ["stars", "source_ids", "gaia_data", "ztf_data"]
+SAFE_TABLES = ["gaia_data", "ztf_data"] # Tables that are safe to delete
