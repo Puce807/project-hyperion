@@ -20,7 +20,7 @@ def clean_val(val):
 
 def process_star(row, source):
     """Takes raw data returned from Gaia query and constructs star dataclass."""
-    if source not in config.allowed_sources:
+    if source not in config.SOURCES:
         log(f"Skipping star; unknown source {source}", level="error")
         return None
     try:
@@ -94,13 +94,15 @@ def format_time(seconds):
     else:
         return ", ".join(parts[:-1]) + f" and {parts[-1]}"
 
-def run_ingestion(limit: int):
+def run_ingestion(data_source, limit: int):
     """Orchestrates the downloading, processing, and database storage of stellar data."""
-    DATA_SOURCE = "ztf" # TODO: Move
+    if data_source not in config.SOURCES:
+        log(f"Unknown source: {data_source}", level="ERROR")
+        return
     start_time = time.time()
 
     log(f"Initiating bulk retrieval for {limit} targets...", level="INFO")
-    results = fetch_data(limit=limit, source=DATA_SOURCE)
+    results = fetch_data(limit=limit, source=data_source)
     network_time = time.time() - start_time
     total = len(results) if results else 0
 
@@ -119,7 +121,7 @@ def run_ingestion(limit: int):
     for idx, row in enumerate(results):
         current_star_num = idx + 1
 
-        final_record = process_star(row, DATA_SOURCE)
+        final_record = process_star(row, data_source)
 
         if final_record:
             add_star(final_record)

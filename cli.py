@@ -36,6 +36,8 @@ def cli():
 @click.option("-v", "--verbose", is_flag=True, help="Print debug logs to the terminal.")
 def inspect(gaia_id, verbose):
     """Pull star data from local database or Gaia including calculated fields"""
+    # FIXME: Work with ZTF
+    # TODO: Make output human readable but options for simple and json
     from src.scraper import fetch_individual_star
     from src.database import fetch_star, add_star, initialize_database
     from src.pipeline import process_star
@@ -67,17 +69,17 @@ def inspect(gaia_id, verbose):
             add_star(final_record)
 
 @cli.command()
+@click.argument("source", type=click.Choice(config.SOURCES))
 @click.option("-l", "--limit", type=int, default=1000, help="Number of stars to fetch")
 @click.option("-v", "--verbose", is_flag=True, help="Print debug logs to the terminal.")
-def fetch_bulk(limit, verbose):
+def fetch(source, limit, verbose):
     """Pull stars from external database for download to local DB"""
     # TODO: Add filters (eg, strict, custom etc)
-    # TODO: Add source (gaia, ztf)
     from src.pipeline import run_ingestion
     from src.database import initialize_database
     initialize_database()
     logger.VERBOSE = verbose
-    run_ingestion(limit)
+    run_ingestion(source, limit)
 
 @cli.command()
 @click.option("-l", "--limit", type=int, default=10000, help="Number of stars to show on plot")
@@ -87,6 +89,7 @@ def fetch_bulk(limit, verbose):
 def hr_diagram(limit, style, annotations, save):
     """Shows a HR diagram using stars from local DB"""
     # TODO: Fix title formatting + filtering
+    # TODO: Change to plot command with hr, light curve etc
     print(save)
     if save is None:
         plot_hr_diagram(limit=limit, style=style, annotations=annotations)
@@ -97,9 +100,9 @@ def hr_diagram(limit, style, annotations, save):
         plot_hr_diagram(limit, style, save, annotations=annotations)
 
 @cli.command()
-@click.option("-y", "--assume-yes", is_flag=True, help="Skip confirmation")
+@click.option("-y", "--assume-yes", is_flag=True, help="Skip deletion confirm prompt")
 @click.option("-t", "--table",
-              type=click.Choice(config.SAFE_TABLES),
+              type=click.Choice(config.SAFE_TABLES + ["all"]),
               default="all", help="Select table")
 def purge(assume_yes, table):
     """Deletes all data in local database and drops tables"""
@@ -128,12 +131,16 @@ def purge(assume_yes, table):
 def list_data(limit, fields, table):
     """Prints a table of stars saved locally to DB"""
     # TODO: Add sorting and filtering
+    # TODO: ADD TO DEV DOCS
     default_fields = {
         "stars": ["id", "ra", "dec"],
         "source_ids": ["hyperion_id", "catalogue", "catalogue_id"],
         "gaia_data": ["hyperion_id", "gaia_id",
                       "parallax", "parallax_error", "parallax_over_error",
-                      "phot_bp_mean_mag", "phot_rp_mean_mag", "phot_g_mean_mag", "bp_rp"]}
+                      "phot_bp_mean_mag", "phot_rp_mean_mag", "phot_g_mean_mag", "bp_rp"],
+        "ztf_data": ["hyperion_id", "filtercode",
+                     "nobs", "ngoodobs",
+                     "weightedmeanmag", "weightedmagrms", "chisq"]}
     if fields:
         selected_fields = fields
     else:
@@ -154,3 +161,6 @@ if __name__ == "__main__":
 # TODO: List stars - prints clean table of current stars - --sort --limit
 # TODO: Stats - prints fun stats
 # TODO: Remove - remove specific object
+# TODO: detect - run full pipeline on an object and ask to save to db - --save
+
+# TODO: Improve helps

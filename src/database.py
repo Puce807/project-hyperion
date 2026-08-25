@@ -183,6 +183,18 @@ def fetch_number(table="stars"):
     connection.close()
     return count
 
+def table_exists(name):
+    connection = sqlite3.connect(config.DATABASE_PATH)
+    cursor = connection.cursor()
+    result = cursor.execute(
+        """
+        SELECT name
+        FROM sqlite_master
+        WHERE type = 'table' AND name = ?
+        """, (name,)
+    ).fetchone()
+    return result is not None
+
 def delete_db(to_delete="all"):
     """Deletes data in local database. Returns True on success, otherwise False"""
     # TODO: make this work more seemlessly so everytime you add a new table you don't need to add to this
@@ -200,15 +212,21 @@ def delete_db(to_delete="all"):
         cursor = connection.cursor()
 
         for table in config.TABLES:
-            if to_delete == "all" or table == to_delete:
-                cursor.execute(f"DELETE FROM {table}")
-                cursor.execute(f"DROP TABLE IF EXISTS {table}")
+            try:
+                if to_delete == "all" or table == to_delete:
+                    if not table_exists(table):
+                        log(f"Skipping table, {table}, does not exist", level="info")
+                        continue
+                    cursor.execute(f"DELETE FROM {table}")
+                    cursor.execute(f"DROP TABLE IF EXISTS {table}")
+            except sqlite3.OperationalError as e:
+                log(f"Error when deleting table, {table}: {e}", level="ERROR")
 
         connection.commit()
         log("All data deleted from DB successfully")
         return True
     except sqlite3.Error as e:
-        log(f"Could not delete DB data: {e}", level="error")
+        log(f"Could not delete DB data: {e}", level="warn")
         return False
     finally:
         if connection:

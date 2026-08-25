@@ -19,7 +19,7 @@ if __name__ == "__main__":
     log("Database initialized successfully")
 
     stars_to_fetch = 150_000
-    run_ingestion(stars_to_fetch)
+    run_ingestion("gaia", stars_to_fetch)
 
 
 # TODO: Add docs to explain what Gaia fields do
