@@ -2,21 +2,19 @@
 
 This guide details how to add a new data source to the pipeline.
 
-> *NOTE:* This is an internal development guide for the creator, assumes familiarity with Hyperion architecture
+> *NOTE:* This is an internal development guide for the creator, assumes familiarity with Hyperion architecture.
+> Instructions make more sense when looking at existing code in context
 
-1. In `src/scraper.py`, create function following pattern of `fetch_bulk_ztf` to fetch data. Ideally use TAP query if possible.
-2. In `src/scaper.py` in the `fetch_data` function, add case to route requests to new data source.
-3. Data model
-   1. In `models.py`, create a new data class called the name of your new data source
-   2. In `models.py`, add your new data class to `Star` data class
-4. Config 
-   1. In `config.py` and `config.defaults.py`, add the name of your new data source to the list `SOURCES` 
-   2. In `config.py` and `config.defaults.py`, add the name of your new data source table name to the list `TABLES` and `SAFE_TABLES` 
-   3. In `config.py` and `config.defaults.py`, create a variable for fields to download 
-5. Database
-   1. In `database.py`, in `initialize_database`, add statement to create table to store data from your new source with correct schema.
-      - Must include `hyperion_id` as primary key referencing stars DB
-      - Must include data source identifier 
-   2. In `database.py` in `add_star`, add a statement to insert data into newly created table
-6. CLI
-   1. In `cli.py`, in `list_data`, add fields to `default_fields` dictionary
+1. Create a new file in `datasources` with the name of your new data source, eg `tess.py`
+2. Copy the content of another datasource class such as `ztf.py` into your new file
+3. Edit variables
+   - `name`, name of data source, string
+   - `table`, name of table storing datasource data, string (e.g. `tess_data`)
+   - `query_fields`, what fields are returned from fetch, dict format (key = field name, val = type) 
+   - `quality_filters`, filters to apply on fetch, SQL format
+   - `schema`, schema of table storing datasource data, string
+   - `database_fields`, fields to insert into datasource table, list
+4. Modify `fetch` function to return data from new datasource
+5. In `models.py` define a new dataclass and add it to the `Star` dataclass
+6. In your new file, modify `normalise` to adapt a row returned from `fetch` into your new model
+7. In `datasources/__init__.py` add the new datasource to the `DATA_SOURCES` dict, using the datasource name as the key and the new datasource class as the value.

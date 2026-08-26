@@ -7,6 +7,7 @@ from src.physics import find_distance, find_luminosity, find_colour_index, find_
 from src.models import Star, SourceID, GaiaData, ZTFData
 from src.scraper import fetch_data
 from src.database import add_star
+from datasources import DATA_SOURCES
 
 def clean_val(val):
     if val in (None, "NOT_AVAILABLE") or str(val).strip() == "":
@@ -20,6 +21,7 @@ def clean_val(val):
 
 def process_star(row, source):
     """Takes raw data returned from Gaia query and constructs star dataclass."""
+    # TODO: Remove once unused
     if source not in config.SOURCES:
         log(f"Skipping star; unknown source {source}", level="error")
         return None
@@ -63,9 +65,6 @@ def process_star(row, source):
         log(f"Skipping star {source_id}, critical error: {e}", level="error")
         return None
 
-    # Changed so calculations are not stored in DB for now. They can be calculated on demand.
-    # TODO: Add ability for user to change GAIA fields
-
     return star
 
 def format_time(seconds):
@@ -96,13 +95,14 @@ def format_time(seconds):
 
 def run_ingestion(data_source, limit: int):
     """Orchestrates the downloading, processing, and database storage of stellar data."""
-    if data_source not in config.SOURCES:
+    if data_source not in DATA_SOURCES.keys():
         log(f"Unknown source: {data_source}", level="ERROR")
         return
+    source = DATA_SOURCES[data_source]
     start_time = time.time()
 
-    log(f"Initiating bulk retrieval for {limit} targets...", level="INFO")
-    results = fetch_data(limit=limit, source=data_source)
+    log(f"Initiating bulk retrieval for {limit} {data_source} targets...", level="INFO")
+    results = source.fetch(limit=limit)
     network_time = time.time() - start_time
     total = len(results) if results else 0
 
@@ -111,7 +111,7 @@ def run_ingestion(data_source, limit: int):
         return
 
     if total != limit:
-        log(f"Stellar payload mismatch: Received {total} results, expected {limit}.", level="WARN")
+        log(f"Payload mismatch: Received {total} results, expected {limit}.", level="WARN")
 
     log(f"Beginning pipeline execution layout for {total} stars...", level="INFO")
 
@@ -121,7 +121,7 @@ def run_ingestion(data_source, limit: int):
     for idx, row in enumerate(results):
         current_star_num = idx + 1
 
-        final_record = process_star(row, data_source)
+        final_record = source.normalise(row)
 
         if final_record:
             add_star(final_record)

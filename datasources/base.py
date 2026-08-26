@@ -5,6 +5,8 @@ class DataSource(ABC):
     table: str
     query_fields: dict
     schema: str
+    database_fields: list
+    # NOTE: database_fields *MUST* be in the same order as query_fields
 
     @abstractmethod
     def fetch(self, limit):

@@ -4,6 +4,7 @@ import os
 import config
 from src.logger import log
 from src.models import Star
+from datasources import DATA_SOURCES
 
 from datasources import DATA_SOURCES
 
@@ -36,36 +37,36 @@ def initialize_database():
                        )
                        """)
 
-    cursor.execute("""
-                   CREATE TABLE IF NOT EXISTS gaia_data (
-                        hyperion_id TEXT PRIMARY KEY,
-                        gaia_id TEXT NOT NULL,
-                        parallax REAL,
-                        parallax_error REAL,
-                        parallax_over_error REAL,
-                        phot_bp_mean_mag REAL,
-                        phot_rp_mean_mag REAL,
-                        phot_g_mean_mag REAL,
-                        bp_rp REAL,
-                        
-                        FOREIGN KEY (hyperion_id) REFERENCES stars(id)
-                   )
-                   """)
-    cursor.execute("""
-                   CREATE TABLE IF NOT EXISTS ztf_data
-                   (
-                       hyperion_id TEXT PRIMARY KEY,
-                       ztf_id TEXT NOT NULL,
-                       filtercode TEXT,
-                       nobs REAL,
-                       ngoodobs REAL,
-                       weightedmeanmag REAL,
-                       weightedmagrms REAL,
-                       chisq REAL,
-
-                       FOREIGN KEY (hyperion_id) REFERENCES stars (id)
-                   )
-                   """)
+    #cursor.execute("""
+    #               CREATE TABLE IF NOT EXISTS gaia_data (
+    #                    hyperion_id TEXT PRIMARY KEY,
+    #                    gaia_id TEXT NOT NULL,
+    #                    parallax REAL,
+    #                    parallax_error REAL,
+    #                    parallax_over_error REAL,
+    #                    phot_bp_mean_mag REAL,
+    #                    phot_rp_mean_mag REAL,
+    #                    phot_g_mean_mag REAL,
+    #                    bp_rp REAL,
+    #
+    #                    FOREIGN KEY (hyperion_id) REFERENCES stars(id)
+    #               )
+    #               """)
+    #cursor.execute("""
+    #               CREATE TABLE IF NOT EXISTS ztf_data
+    #               (
+    #                   hyperion_id TEXT PRIMARY KEY,
+    #                   ztf_id TEXT NOT NULL,
+    #                   filtercode TEXT,
+    #                   nobs REAL,
+    #                   ngoodobs REAL,
+    #                   weightedmeanmag REAL,
+    #                   weightedmagrms REAL,
+    #                   chisq REAL,
+    #
+    #                   FOREIGN KEY (hyperion_id) REFERENCES stars (id)
+    #               )
+    #               """)
 
     log(f"Database verified at {config.DATABASE_PATH}")
     connection.commit()
@@ -83,37 +84,60 @@ def add_star(star: Star):
             "INSERT INTO stars (id, ra, dec) VALUES (?, ?, ?)",
             (star.id, star.ra, star.dec)
         )
-        # Source IDs Table
+
         for source_id in star.source_ids:
             cursor.execute(
                 "INSERT INTO source_ids (hyperion_id, catalogue, catalogue_id) VALUES (?, ?, ?)",
                 (star.id, source_id.catalogue, source_id.id)
             )
-            gaia_data = star.gaia_data
-            if "gaia" == source_id.catalogue and gaia_data is not None:
-                # Gaia Data Table
-                cursor.execute(
-                    """INSERT INTO gaia_data (hyperion_id, gaia_id,
-                                              parallax, parallax_error, parallax_over_error,
-                                              phot_bp_mean_mag, phot_rp_mean_mag, phot_g_mean_mag, bp_rp)
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (star.id, source_id.id,
-                     gaia_data.parallax, gaia_data.parallax_error, gaia_data.parallax_over_error,
-                     gaia_data.phot_bp_mean_mag, gaia_data.phot_rp_mean_mag, gaia_data.phot_g_mean_mag,
-                     gaia_data.bp_rp)
-                )
-            ztf_data = star.ztf_data
-            if "ztf" == source_id.catalogue and ztf_data is not None:
-                # ZTF Data Table
-                cursor.execute(
-                    """INSERT INTO ztf_data (hyperion_id, ztf_id, 
-                                             filtercode, nobs, ngoodobs, 
-                                             weightedmeanmag, weightedmagrms, chisq)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-                    (star.id, source_id.id,
-                     ztf_data.filtercode, ztf_data.nobs, ztf_data.ngoodobs,
-                     ztf_data.weightedmeanmag, ztf_data.weightedmagrms, ztf_data.chisq)
-                )
+
+            source = DATA_SOURCES[source_id.catalogue]
+            data = getattr(star, f"{source.name}_data")
+
+            col_list = source.database_fields
+            col_str = ", ".join(col_list)
+            placeholders = ", ".join("?" for _ in col_list)
+
+            parameters = [
+                star.id, source_id.id,
+                *(getattr(data, field) for field in col_list[2:])
+            ]
+
+            cursor.execute(
+                f"""
+                INSERT INTO {source.table} ({col_str})
+                VALUES ({placeholders})
+                """,
+                parameters
+            )
+
+            #gaia_data = star.gaia_data
+            #if "gaia" == source_id.catalogue and gaia_data is not None:
+            #    # Gaia Data Table
+            #    cursor.execute(
+            #        """INSERT INTO gaia_data (hyperion_id, gaia_id,
+            #                                  parallax, parallax_error, parallax_over_error,
+            #                                  phot_bp_mean_mag, phot_rp_mean_mag, phot_g_mean_mag, bp_rp)
+            #           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            #        (star.id, source_id.id,
+            #         gaia_data.parallax, gaia_data.parallax_error, gaia_data.parallax_over_error,
+            #         gaia_data.phot_bp_mean_mag, gaia_data.phot_rp_mean_mag, gaia_data.phot_g_mean_mag,
+            #         gaia_data.bp_rp)
+            #    )
+            #ztf_data = star.ztf_data
+            #if "ztf" == source_id.catalogue and ztf_data is not None:
+            #    # ZTF Data Table
+            #    cursor.execute(
+            #        """INSERT INTO ztf_data (hyperion_id, ztf_id,
+            #                                 filtercode, nobs, ngoodobs,
+            #                                 weightedmeanmag, weightedmagrms, chisq)
+            #        VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+            #        (star.id, source_id.id,
+            #         ztf_data.filtercode, ztf_data.nobs, ztf_data.ngoodobs,
+            #         ztf_data.weightedmeanmag, ztf_data.weightedmagrms, ztf_data.chisq)
+            #    )
+
+
 
         connection.commit()
     except sqlite3.IntegrityError as e:

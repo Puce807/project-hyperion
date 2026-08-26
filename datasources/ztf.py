@@ -3,7 +3,7 @@ from uuid import uuid4
 from astroquery.ipac.irsa import Irsa
 from src.logger import log
 from src.models import Star, SourceID, ZTFData
-from src.pipeline import clean_val
+from .utils import clean_val
 from .base import DataSource
 import config
 
@@ -36,6 +36,17 @@ class ZTFDataSource(DataSource):
         weightedmeanmag REAL,
         weightedmagrms REAL,
         chisq REAL"""
+    database_fields = [
+        "hyperion_id",
+        "ztf_id",
+        "filtercode",
+        "nobs",
+        "ngoodobs",
+        "weightedmeanmag",
+        "weightedmagrms",
+        "chisq",
+    ]
+
     source = "ztf_objects_dr24"
 
     def fetch(self, limit=1):

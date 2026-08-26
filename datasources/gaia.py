@@ -3,7 +3,7 @@ from uuid import uuid4
 from astroquery.gaia import Gaia
 from src.logger import log
 from src.models import Star, SourceID, GaiaData
-from src.pipeline import clean_val
+from .utils import clean_val
 from .base import DataSource
 import config
 
@@ -17,8 +17,9 @@ class GaiaDataSource(DataSource):
         "parallax": float,
         "parallax_error": float,
         "parallax_over_error": float,
-        "phot_g_mean_mag": float,
         "phot_bp_mean_mag": float,
+        "phot_rp_mean_mag": float,
+        "phot_g_mean_mag": float,
         "bp_rp": float
     }
     query_fields_str = ", ".join(query_fields.keys())
@@ -41,6 +42,17 @@ class GaiaDataSource(DataSource):
         phot_rp_mean_mag REAL,
         phot_g_mean_mag REAL,
         bp_rp REAL"""
+    database_fields = [
+        "hyperion_id",
+        "gaia_id",
+        "parallax",
+        "parallax_error",
+        "parallax_over_error",
+        "phot_bp_mean_mag",
+        "phot_rp_mean_mag",
+        "phot_g_mean_mag",
+        "bp_rp",
+    ]
     source = "gaiadr3.gaia_source"
 
     def fetch(self, limit=1):

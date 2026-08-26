@@ -129,17 +129,14 @@ def purge(assume_yes, table):
               type=click.Choice(config.TABLES),
               default="stars", help="Select table")
 def list_data(limit, fields, table):
+    from datasources import ZTFDataSource, GaiaDataSource
     """Prints a table of stars saved locally to DB"""
     # TODO: Add sorting and filtering
     default_fields = {
         "stars": ["id", "ra", "dec"],
         "source_ids": ["hyperion_id", "catalogue", "catalogue_id"],
-        "gaia_data": ["hyperion_id", "gaia_id",
-                      "parallax", "parallax_error", "parallax_over_error",
-                      "phot_bp_mean_mag", "phot_rp_mean_mag", "phot_g_mean_mag", "bp_rp"],
-        "ztf_data": ["hyperion_id", "filtercode",
-                     "nobs", "ngoodobs",
-                     "weightedmeanmag", "weightedmagrms", "chisq"]}
+        "gaia_data": GaiaDataSource.database_fields,
+        "ztf_data": ZTFDataSource.database_fields}
     if fields:
         selected_fields = fields
     else:
