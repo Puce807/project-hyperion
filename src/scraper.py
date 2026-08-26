@@ -61,8 +61,6 @@ def execute_gaia_query(adql_query: str):
 
         return None
 
-        log(f"Could not execute Gaia query: {e}", level="error")
-        return None
 
 def fetch_bulk_gaia(limit: int=1):
     """Fetches a sample of stars from the Gaia catalogue"""
@@ -78,8 +76,6 @@ def fetch_bulk_gaia(limit: int=1):
 
 def fetch_bulk_ztf(limit: int=1):
     """Fetches a sample of stars from the ZTF catalogue"""
-    from astropy.coordinates import SkyCoord
-    import astropy.units as u
     # TODO NEXT: Ensure column names are correct
     try:
         result = Irsa.query_tap(f'''SELECT TOP {limit}

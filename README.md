@@ -2,7 +2,7 @@
 
 [Docs](./docs/docs.md)
 
-Project Hyperion aims to be a self-hosted astrophysics pipeline designed to process data from the European Space Agency's (ESA) Gaia mission.
+Project Hyperion aims to be a self-hosted astrophysics pipeline designed to process data from multiple sources.
 
 > **Status: Phase 1 - Active Development / Work in Progress**
 
@@ -16,11 +16,11 @@ Project Hyperion aims to be a self-hosted astrophysics pipeline designed to proc
    - [ ] Add levels of filtering to CLI (none, strict, custom, etc)
    - [x] Logging
    - [ ] Quality filters (RUWE, parallax error)
-   - [ ] HR Diagram to show results
+   - [x] HR Diagram to show results
    - [x] Physics Calculation Testing
    - [ ] Add current results to README (hr diagram)
    - [ ] Docs
-   - [ ] Refactor to use dataclasses to allow other data sources
+   - [x] Refactor to use dataclasses to allow other data sources
 
 2. Analytics
    - [ ] Web Dashboard (maybe)
@@ -38,7 +38,6 @@ Project Hyperion aims to be a self-hosted astrophysics pipeline designed to proc
    - [ ] Optimise pipeline
    - [ ] Dockerization
 
-4. Advanced: 
-   - [ ] Pull from other data sources 
+4. Advanced:
    - [ ] Distributed compute
    - [ ] Train Neural Network to recognise variable stars

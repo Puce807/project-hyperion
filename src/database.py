@@ -5,6 +5,8 @@ import config
 from src.logger import log
 from src.models import Star
 
+from datasources import DATA_SOURCES
+
 def initialize_database():
     """Initialises database by creating file and adding missing columns."""
     os.makedirs("data", exist_ok=True)
@@ -23,6 +25,17 @@ def initialize_database():
                        UNIQUE (catalogue, catalogue_id)
                    )
                    """)
+
+    for data_source in DATA_SOURCES.values():
+        cursor.execute(f"""
+                       CREATE TABLE IF NOT EXISTS {data_source.table}
+                       (
+                           hyperion_id         TEXT PRIMARY KEY,
+                           {data_source.schema},
+                           FOREIGN KEY (hyperion_id) REFERENCES stars (id)
+                       )
+                       """)
+
     cursor.execute("""
                    CREATE TABLE IF NOT EXISTS gaia_data (
                         hyperion_id TEXT PRIMARY KEY,

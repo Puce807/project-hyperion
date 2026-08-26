@@ -131,7 +131,6 @@ def purge(assume_yes, table):
 def list_data(limit, fields, table):
     """Prints a table of stars saved locally to DB"""
     # TODO: Add sorting and filtering
-    # TODO: ADD TO DEV DOCS
     default_fields = {
         "stars": ["id", "ra", "dec"],
         "source_ids": ["hyperion_id", "catalogue", "catalogue_id"],
