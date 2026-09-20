@@ -25,4 +25,4 @@ ZTF_FIELDS = """oid, ra, dec, filtercode, nobs, ngoodobs, weightedmeanmag, weigh
 ZTF_FIELDS_LIST = [field.strip() for field in ZTF_FIELDS.split(",") if field.strip()]
 
 TABLES = ["stars", "source_ids", "gaia_data", "ztf_data"]
-SAFE_TABLES = ["gaia_data", "ztf_data"] # Tables that are safe to delete
+SAFE_TABLES = ["gaia_data", "ztf_data"] # Tables that are (safe) to delete

@@ -32,41 +32,29 @@ def cli():
     pass
 
 @cli.command()
-@click.argument("gaia_id", type=int)
+@click.argument("source_id")
+@click.option("-s", "--source", type=click.Choice([*config.SOURCES, "hyperion"]), default="hyperion", help="ID belonging to which catalogue")
+@click.option("-t", "--table", type=click.Choice(config.TABLES), default="stars", help="Table to fetch data from")
 @click.option("-v", "--verbose", is_flag=True, help="Print debug logs to the terminal.")
-def inspect(gaia_id, verbose):
-    """Pull star data from local database or Gaia including calculated fields"""
-    # FIXME: Work with ZTF
+def inspect(source_id, source, table, verbose):
+    """Pull star data from local database"""
     # TODO: Make output human readable but options for simple and json
-    from src.scraper import fetch_individual_star
-    from src.database import fetch_star, add_star, initialize_database
-    from src.pipeline import process_star
+    from src.database import fetch_star, initialize_database
 
     logger.VERBOSE = verbose
 
     initialize_database()
-    data = fetch_star(int(gaia_id))
+    data = fetch_star(source_id=source_id, table=table, source=source)
     if data is not None: # Star exists in local database
         final_record = dict(data)
-        exists = True
-        log(f"Displaying local database record for star {gaia_id}", level="cli")
+        log(f"Displaying local database record for star {source_id}", level="cli")
     else:
-        exists = False
-        log(f"Star {gaia_id} not found locally. Querying Gaia servers...", level="cli")
-        data = fetch_individual_star(int(gaia_id))
-        if data is not None:
-            final_record = process_star(data)
-        else:
-            log(f"Could not locate star {gaia_id} in local storage or online registries.", level="cli")
-            return
+        log(f"Could not locate star {source_id} in local database for catalogue `{source}`, table `{table}'", level="cli")
+        return
 
     for column_name, value in final_record.items():
         print(f"{column_name:<30}: {value}")
 
-    if not exists:
-        answer = ask("Do you want to save this star to the local database? [y/n]", ["y","n"])
-        if answer.lower() == "y":
-            add_star(final_record)
 
 @cli.command()
 @click.argument("source", type=click.Choice(config.SOURCES))
@@ -129,11 +117,12 @@ def purge(assume_yes, table):
               type=click.Choice(config.TABLES),
               default="stars", help="Select table")
 def list_data(limit, fields, table):
-    from datasources import ZTFDataSource, GaiaDataSource
     """Prints a table of stars saved locally to DB"""
+    from datasources import ZTFDataSource, GaiaDataSource
     # TODO: Add sorting and filtering
+    # TODO: Add docs
     default_fields = {
-        "stars": ["id", "ra", "dec"],
+        "stars": ["hyperion_id", "ra", "dec"],
         "source_ids": ["hyperion_id", "catalogue", "catalogue_id"],
         "gaia_data": GaiaDataSource.database_fields,
         "ztf_data": ZTFDataSource.database_fields}
@@ -141,7 +130,7 @@ def list_data(limit, fields, table):
         selected_fields = fields
     else:
         selected_fields = default_fields[table]
-    # TODO: Add docs
+    print(table)
     results = fetch_rows_batch(limit=limit, fields=selected_fields, table=table)
     if len(results) == 0:
         print("No stars found in database")

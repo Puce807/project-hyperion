@@ -15,14 +15,14 @@ def initialize_database():
     cursor = connection.cursor()
 
     cursor.execute("PRAGMA journal_mode=WAL;")
-    cursor.execute("CREATE TABLE IF NOT EXISTS stars (id TEXT PRIMARY KEY, ra REAL NOT NULL, dec REAL NOT NULL)")
+    cursor.execute("CREATE TABLE IF NOT EXISTS stars (hyperion_id TEXT PRIMARY KEY, ra REAL NOT NULL, dec REAL NOT NULL)")
     cursor.execute("""
                    CREATE TABLE IF NOT EXISTS source_ids (
                        hyperion_id  TEXT NOT NULL,
                        catalogue    TEXT NOT NULL,
                        catalogue_id TEXT NOT NULL,
 
-                       FOREIGN KEY (hyperion_id) REFERENCES stars (id),
+                       FOREIGN KEY (hyperion_id) REFERENCES stars (hyperion_id),
                        UNIQUE (catalogue, catalogue_id)
                    )
                    """)
@@ -33,7 +33,7 @@ def initialize_database():
                        (
                            hyperion_id         TEXT PRIMARY KEY,
                            {data_source.schema},
-                           FOREIGN KEY (hyperion_id) REFERENCES stars (id)
+                           FOREIGN KEY (hyperion_id) REFERENCES stars (hyperion_id)
                        )
                        """)
 
@@ -81,7 +81,7 @@ def add_star(star: Star):
     try:
         # Stars Table
         cursor.execute(
-            "INSERT INTO stars (id, ra, dec) VALUES (?, ?, ?)",
+            "INSERT INTO stars (hyperion_id, ra, dec) VALUES (?, ?, ?)",
             (star.id, star.ra, star.dec)
         )
 
@@ -148,24 +148,40 @@ def add_star(star: Star):
     finally:
         connection.close()
 
-def fetch_star(source_id):
+def fetch_star(source_id, table="stars", source="hyperion"):
     """Returns saved data on a certain star based on source ID"""
+    if source != "hyperion" and source not in config.SOURCES:
+        log(f"Unknown source: {source}", level="error")
+        return None
+
     connection = sqlite3.connect(config.DATABASE_PATH)
     connection.row_factory = sqlite3.Row
     cursor = connection.cursor()
 
-    sql = f"SELECT * FROM stars WHERE id = {source_id};"
+    if source == "hyperion":
+        hyperion_id = source_id
+    else:
+        try:
+            sql = f"SELECT hyperion_id FROM source_ids WHERE catalogue = ? AND catalogue_id = ?;"
+            cursor.execute(sql, (source, source_id,))
+            hyperion_id = str(cursor.fetchone()[0])
+        except Exception as e:
+            log(f"Could not locate star {source_id} in source_ids table", level="error")
+            return None
+
 
     try:
-        cursor.execute(sql)
+        sql = f"SELECT * FROM {table} WHERE hyperion_id = ?"
+        cursor.execute(sql, (hyperion_id,))
         results = cursor.fetchone()
+
         if results is None:
-            log(f"No data found for star {source_id}", level="error")
+            log(f"No data found for star {hyperion_id} in {table}", level="error")
             return None
-        log(f"Successfully retrieved data of star {source_id} from local database")
+        log(f"Successfully retrieved data of star {hyperion_id} from local database")
         return results
     except Exception as e:
-        log(f"Failed to retrieve data of star {source_id} Error: {e}", level="error")
+        log(f"Failed to retrieve data of star {hyperion_id} in {table} Error: {e}", level="error")
         return None
     finally:
         connection.close()
@@ -187,7 +203,7 @@ def fetch_rows_batch(source_ids=None, fields=None, limit=None, table="stars"):
 
     if source_ids:
         placeholders = ", ".join(["?"] * len(source_ids))
-        sql = f"SELECT {columns_clause} FROM {table} WHERE id IN ({placeholders}){limit_clause};"
+        sql = f"SELECT {columns_clause} FROM {table} WHERE hyperion_id IN ({placeholders}){limit_clause};"
         query_args = tuple(source_ids)
         log_msg = f"Querying up to {limit if limit else len(source_ids)} specific target IDs"
     else:
