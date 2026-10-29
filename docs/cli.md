@@ -5,34 +5,36 @@ This doc explains how to use the CLI commands in Project Hyperion.
 <!-- TOC -->
 * [CLI Docs](#cli-docs)
   * [Inspect](#inspect)
-  * [Fetch-Bulk](#fetch-bulk)
+  * [Fetch](#fetch)
   * [hr-diagram](#hr-diagram)
 <!-- TOC -->
 
 ## Inspect
 
-Pull individual star data from local database or Gaia including calculated fields.
+Pull individual star data from local database.
 If star is not found locally, command will fetch from Gaia and ask user if star should be saved to local DB.
 
 ### Usage
 
 ```commandline
-python cli.py inspect GAIA_ID [OPTIONS]
+python cli.py inspect SOURCE_ID [OPTIONS]
 ```
 
 ### Arguments
 
+| Argument  | Type   | Description                |
+|-----------|--------|----------------------------|
+| source_id | string | Source ID of target object |
 
-| Argument | Type       | Description                      | Required |
-|----------|------------|----------------------------------|----------|
-| GAIA_ID  | INT | Unique Gaia Source ID to look up | Yes      |
 
 ### Options
 
-| Options   | Type | Default | Description                                  | 
-|-----------|------|---------|----------------------------------------------|
-| --verbose | FLAG | False   | Enables debug logging to terminal            |
-| --help    | FLAG | False   | Shows helpful list of sub commands and flags |
+| Options        | Type   | Default  | Description                                  | 
+|----------------|--------|----------|----------------------------------------------|
+| --source (-s)  | STRING | hyperion | ID Belonging to which catalogue              |
+| --table (-t)   | STRING | stars    | Which table to fetch data from               |
+| --verbose (-v) | FLAG   | False    | Enables debug logging to terminal            |
+| --help         | FLAG   | False    | Shows helpful list of sub commands and flags |
 
 ### Example
 
@@ -76,14 +78,14 @@ temperature                   : 4746.026354580844
 luminosity                    : 0.7498214752734003
 ```
 
-## Fetch-Bulk
+## Fetch
 
-Scrape stars from the Gaia server to be downloaded to local database including calculated fields.
+Scrape stars from remote server to be downloaded to local database including calculated fields.
 
 ### Usage
 
 ```commandline
-python cli.py fetch-bulk [OPTIONS]
+python cli.py fetch [OPTIONS] {ztf|gia}
 ```
 
 ### Options

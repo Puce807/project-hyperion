@@ -34,26 +34,88 @@ def cli():
 @cli.command()
 @click.argument("source_id")
 @click.option("-s", "--source", type=click.Choice([*config.SOURCES, "hyperion"]), default="hyperion", help="ID belonging to which catalogue")
-@click.option("-t", "--table", type=click.Choice(config.TABLES), default="stars", help="Table to fetch data from")
 @click.option("-v", "--verbose", is_flag=True, help="Print debug logs to the terminal.")
-def inspect(source_id, source, table, verbose):
+def inspect(source_id, source, verbose):
     """Pull star data from local database"""
     # TODO: Make output human readable but options for simple and json
+    # TODO: Make option for querying remote database
+    # TODO: Check for edge cases
+    # TODO: Make labels have no _ and capitalize + add flag to toggle
     from src.database import fetch_star, initialize_database
 
     logger.VERBOSE = verbose
 
     initialize_database()
-    data = fetch_star(source_id=source_id, table=table, source=source)
-    if data is not None: # Star exists in local database
-        final_record = dict(data)
-        log(f"Displaying local database record for star {source_id}", level="cli")
-    else:
-        log(f"Could not locate star {source_id} in local database for catalogue `{source}`, table `{table}'", level="cli")
+    source_ids_data = fetch_star(source_id=source_id, table="source_ids", source=source)
+
+    if not source_ids_data:
+        log(f"Could not locate star {source_id} in local database for catalogue `{source}`, table `source_ids'",
+            level="cli")
         return
 
-    for column_name, value in final_record.items():
-        print(f"{column_name:<30}: {value}")
+    hyperion_id = source_id if source == "hyperion" else dict(source_ids_data[0])["hyperion_id"]
+
+    position_data = fetch_star(source_id=hyperion_id, table="stars", source="hyperion")
+    position_data = position_data[0] if position_data else None
+
+    catalogue_data = {}
+    for star in source_ids_data:
+        catalogue = dict(star)["catalogue"]
+        cata_table = catalogue + "_data"
+        cata_data = fetch_star(source_id=hyperion_id, table=cata_table, source="hyperion")
+        if cata_data:
+            catalogue_data[catalogue] = dict(cata_data[0])
+        else:
+            catalogue_data[catalogue] = None
+
+    # 1. Lookup SOURCE_IDS to find what catalogues are used
+    # 2. Pull data from catalogue data sets
+
+    # === Message ===
+
+    # --- Header ---
+    msg = f" Star Record: {source_id}"
+    border = "=" * len(msg)
+    print(border)
+    print(msg)
+    print(border)
+    print("")
+
+    # --- Identifiers ---
+    print("Identifiers")
+    print(f" {'Hyperion ID':<30}: {hyperion_id}")
+    for star in source_ids_data:
+        star = dict(star)
+        catalogue_name = star["catalogue"]
+        catalogue_id = star["catalogue_id"]
+        label = catalogue_name.capitalize() + " ID"
+        print(f" {label:<30}: {catalogue_id}")
+    print("")
+
+    # --- Catalogue Data ---
+    for catalogue_name, data in catalogue_data.items():
+        print(catalogue_name.capitalize())
+        if not data:
+            print(" No data found")
+            continue
+        for field, value in data.items():
+            if "id" in field:
+                continue
+            print(f" {field:<30}: {value}")
+        print("")
+    print("")
+
+    # --- Position ---
+    print("Position")
+    if position_data is None:
+        print(" No data found")
+    else:
+        ra = round(position_data["ra"], 6)
+        dec = round(position_data["dec"], 6)
+        print(f" {'RA':<30}: {ra}°")
+        print(f" {'DEC':<30}: {dec}°")
+
+
 
 
 @cli.command()

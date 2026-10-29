@@ -37,37 +37,6 @@ def initialize_database():
                        )
                        """)
 
-    #cursor.execute("""
-    #               CREATE TABLE IF NOT EXISTS gaia_data (
-    #                    hyperion_id TEXT PRIMARY KEY,
-    #                    gaia_id TEXT NOT NULL,
-    #                    parallax REAL,
-    #                    parallax_error REAL,
-    #                    parallax_over_error REAL,
-    #                    phot_bp_mean_mag REAL,
-    #                    phot_rp_mean_mag REAL,
-    #                    phot_g_mean_mag REAL,
-    #                    bp_rp REAL,
-    #
-    #                    FOREIGN KEY (hyperion_id) REFERENCES stars(id)
-    #               )
-    #               """)
-    #cursor.execute("""
-    #               CREATE TABLE IF NOT EXISTS ztf_data
-    #               (
-    #                   hyperion_id TEXT PRIMARY KEY,
-    #                   ztf_id TEXT NOT NULL,
-    #                   filtercode TEXT,
-    #                   nobs REAL,
-    #                   ngoodobs REAL,
-    #                   weightedmeanmag REAL,
-    #                   weightedmagrms REAL,
-    #                   chisq REAL,
-    #
-    #                   FOREIGN KEY (hyperion_id) REFERENCES stars (id)
-    #               )
-    #               """)
-
     log(f"Database verified at {config.DATABASE_PATH}")
     connection.commit()
     connection.close()
@@ -111,34 +80,6 @@ def add_star(star: Star):
                 parameters
             )
 
-            #gaia_data = star.gaia_data
-            #if "gaia" == source_id.catalogue and gaia_data is not None:
-            #    # Gaia Data Table
-            #    cursor.execute(
-            #        """INSERT INTO gaia_data (hyperion_id, gaia_id,
-            #                                  parallax, parallax_error, parallax_over_error,
-            #                                  phot_bp_mean_mag, phot_rp_mean_mag, phot_g_mean_mag, bp_rp)
-            #           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            #        (star.id, source_id.id,
-            #         gaia_data.parallax, gaia_data.parallax_error, gaia_data.parallax_over_error,
-            #         gaia_data.phot_bp_mean_mag, gaia_data.phot_rp_mean_mag, gaia_data.phot_g_mean_mag,
-            #         gaia_data.bp_rp)
-            #    )
-            #ztf_data = star.ztf_data
-            #if "ztf" == source_id.catalogue and ztf_data is not None:
-            #    # ZTF Data Table
-            #    cursor.execute(
-            #        """INSERT INTO ztf_data (hyperion_id, ztf_id,
-            #                                 filtercode, nobs, ngoodobs,
-            #                                 weightedmeanmag, weightedmagrms, chisq)
-            #        VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
-            #        (star.id, source_id.id,
-            #         ztf_data.filtercode, ztf_data.nobs, ztf_data.ngoodobs,
-            #         ztf_data.weightedmeanmag, ztf_data.weightedmagrms, ztf_data.chisq)
-            #    )
-
-
-
         connection.commit()
     except sqlite3.IntegrityError as e:
         #log(f"Target ID {star.id} already exists in local database. Skipping", level="warn")
@@ -149,7 +90,8 @@ def add_star(star: Star):
         connection.close()
 
 def fetch_star(source_id, table="stars", source="hyperion"):
-    """Returns saved data on a certain star based on source ID"""
+    """Returns saved data on a certain star based on source ID
+    source: source of the source_id, eg hyperion or gaia"""
     if source != "hyperion" and source not in config.SOURCES:
         log(f"Unknown source: {source}", level="error")
         return None
@@ -164,18 +106,17 @@ def fetch_star(source_id, table="stars", source="hyperion"):
         try:
             sql = f"SELECT hyperion_id FROM source_ids WHERE catalogue = ? AND catalogue_id = ?;"
             cursor.execute(sql, (source, source_id,))
-            hyperion_id = str(cursor.fetchone()[0])
+            hyperion_id = dict(cursor.fetchall()[0])["hyperion_id"]
         except Exception as e:
             log(f"Could not locate star {source_id} in source_ids table", level="error")
             return None
 
-
     try:
         sql = f"SELECT * FROM {table} WHERE hyperion_id = ?"
         cursor.execute(sql, (hyperion_id,))
-        results = cursor.fetchone()
+        results = cursor.fetchall()
 
-        if results is None:
+        if not results:
             log(f"No data found for star {hyperion_id} in {table}", level="error")
             return None
         log(f"Successfully retrieved data of star {hyperion_id} from local database")
@@ -185,6 +126,19 @@ def fetch_star(source_id, table="stars", source="hyperion"):
         return None
     finally:
         connection.close()
+
+def find_hyperion_id(source_id, catalogue):
+    """Returns hyperion ID when given a catalogue ID"""
+    connection = sqlite3.connect(config.DATABASE_PATH)
+    cursor = connection.cursor()
+    try:
+        sql = f"SELECT hyperion_id FROM source_ids WHERE catalogue = ? AND catalogue_id = ?;"
+        cursor.execute(sql, (catalogue, source_id,))
+        hyperion_id = str(cursor.fetchall())
+        return hyperion_id
+    except Exception as e:
+        log(f"Could not locate star {source_id} in source_ids table", level="error")
+        return None
 
 def fetch_rows_batch(source_ids=None, fields=None, limit=None, table="stars"):
     """Returns saved data for a list of star source IDs or random rows selecting specific fields"""
