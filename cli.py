@@ -3,6 +3,7 @@ import random
 from src.logger import log
 import src.logger as logger
 import config
+import json
 from src.plotting import plot_hr_diagram
 from src.database import fetch_number, delete_db, fetch_rows_batch
 from tabulate import tabulate
@@ -35,10 +36,11 @@ def cli():
 @click.argument("source_id")
 @click.option("-s", "--source", type=click.Choice([*config.SOURCES, "hyperion"]), default="hyperion", help="ID belonging to which catalogue")
 @click.option("-r", "--raw", is_flag=True, help="Display original field names without formatting.")
+@click.option("-j", "--json", "output_json", is_flag=True, help="Returns data in JSON format")
+@click.option("-o", "--output", "output_path", type=click.File("w"), required=False, help="Save output to file")
 @click.option("-v", "--verbose", is_flag=True, help="Print debug logs to the terminal.")
-def inspect(source_id, source, raw, verbose):
+def inspect(source_id, source, raw, output_json, output_path, verbose):
     """Pull star data from local database"""
-    # TODO: Make output json
     # TODO: Make option for querying remote database
     # TODO: Check for edge cases
     from src.database import fetch_star, initialize_database
@@ -68,53 +70,87 @@ def inspect(source_id, source, raw, verbose):
         else:
             catalogue_data[catalogue] = None
 
-    # === Message ===
-
-    # --- Header ---
-    msg = f" Star Record: {source_id}"
-    border = "=" * len(msg)
-    print(border)
-    print(msg)
-    print(border)
-    print("")
-
-    # --- Identifiers ---
-    print("Identifiers")
-    print(f" {'Hyperion ID':<30}: {hyperion_id}")
-    for star in source_ids_data:
-        star = dict(star)
-        catalogue_name = star["catalogue"]
-        catalogue_id = star["catalogue_id"]
-        label = catalogue_name.capitalize() + " ID"
-        print(f" {label:<30}: {catalogue_id}")
-    print("")
-
-    # --- Catalogue Data ---
-    for catalogue_name, data in catalogue_data.items():
-        print(catalogue_name.capitalize())
-        if not data:
-            print(" No data found")
-            continue
-        for field, value in data.items():
-            if "id" in field:
+    if output_json:
+        # --- Identifiers ---
+        data_dict = {"hyperion_id": hyperion_id, "identifiers": {}, "catalogues": {}, "position": {}}
+        for star in source_ids_data:
+            star = dict(star)
+            catalogue_name = star["catalogue"]
+            catalogue_id = star["catalogue_id"]
+            data_dict["identifiers"][catalogue_name] = catalogue_id
+        # --- Catalogue Data ---
+        for catalogue_name, data in catalogue_data.items():
+            data_dict["catalogues"][catalogue_name] = {}
+            if not data:
+                data_dict["catalogues"][catalogue_name] = None
                 continue
-            if raw:
-                formatted_field = field
-            else:
-                formatted_field = (field.replace("_", " ")).capitalize()
-            print(f" {formatted_field:<30}: {value}")
-        print("")
-    print("")
+            for field, value in data.items():
+                if "id" in field:
+                    continue
+                data_dict["catalogues"][catalogue_name][field] = value
+        # --- Position ---
+        ra = position_data["ra"]
+        dec = position_data["dec"]
+        data_dict["position"]["ra"] = ra if ra is not None else None
+        data_dict["position"]["dec"] = dec if dec is not None else None
 
-    # --- Position ---
-    print("Position")
-    if position_data is None:
-        print(" No data found")
+        _output = json.dumps(data_dict, indent=2)
+        print(_output)
+        if output_path:
+            output_path.write(_output)
+
+
     else:
-        ra = round(position_data["ra"], 6)
-        dec = round(position_data["dec"], 6)
-        print(f" {'RA':<30}: {ra}°")
-        print(f" {'DEC':<30}: {dec}°")
+        # === Message ===
+        # --- Header ---
+        msg = f" Star Record: {source_id}"
+        border = "=" * len(msg)
+        text_output = [border, msg, border, ""]
+
+        # --- Identifiers ---
+        text_output.append("Identifiers")
+        text_output.append(f" {'Hyperion ID':<30}: {hyperion_id}")
+        for star in source_ids_data:
+            star = dict(star)
+            catalogue_name = star["catalogue"]
+            catalogue_id = star["catalogue_id"]
+            label = catalogue_name.capitalize() + " ID"
+            text_output.append(f" {label:<30}: {catalogue_id}")
+        text_output.append("")
+
+        # --- Catalogue Data ---
+        for catalogue_name, data in catalogue_data.items():
+            text_output.append(catalogue_name.capitalize())
+            if not data:
+                text_output.append(" No data found")
+                continue
+            for field, value in data.items():
+                if "id" in field:
+                    continue
+                if raw:
+                    formatted_field = field
+                else:
+                    formatted_field = (field.replace("_", " ")).capitalize()
+                text_output.append(f" {formatted_field:<30}: {value}")
+            text_output.append("")
+        text_output.append("")
+
+        # --- Position ---
+        text_output.append("Position")
+        if position_data is None:
+            text_output.append(" No data found")
+        else:
+            ra = round(position_data["ra"], 6)
+            dec = round(position_data["dec"], 6)
+            text_output.append(f" {'RA':<30}: {ra}°")
+            text_output.append(f" {'DEC':<30}: {dec}°")
+
+        _output = "\n".join(text_output)
+        print(_output)
+        if output_path:
+            output_path.write(_output)
+
+
 
 
 @cli.command()
