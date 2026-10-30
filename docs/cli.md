@@ -12,7 +12,6 @@ This doc explains how to use the CLI commands in Project Hyperion.
 ## Inspect
 
 Pull individual star data from local database.
-If star is not found locally, command will fetch from Gaia and ask user if star should be saved to local DB.
 
 ### Usage
 
@@ -29,53 +28,84 @@ python cli.py inspect SOURCE_ID [OPTIONS]
 
 ### Options
 
-| Options        | Type   | Default  | Description                                  | 
-|----------------|--------|----------|----------------------------------------------|
-| --source (-s)  | STRING | hyperion | ID Belonging to which catalogue              |
-| --table (-t)   | STRING | stars    | Which table to fetch data from               |
-| --verbose (-v) | FLAG   | False    | Enables debug logging to terminal            |
-| --help         | FLAG   | False    | Shows helpful list of sub commands and flags |
+| Options        | Type   | Default  | Description                                     | 
+|----------------|--------|----------|-------------------------------------------------|
+| --source (-s)  | STRING | hyperion | ID Belonging to which catalogue                 |
+| --raw (-r)     | FLAG   | False    | Display original field names without formatting |
+| --json (-j)    | FLAG   | False    | Output in JSON format                           |
+| --output (-o)  | PATH   | -        | Path to save output to                          |
+| --verbose (-v) | FLAG   | False    | Enables debug logging to terminal               |
+| --help         | FLAG   | False    | Shows helpful list of sub commands and flags    |
+
+> When using a source ID belonging to a catalogue (not hyperion), you must specify the source with the `--source` flag
 
 ### Example
 
 Basic Look Up: 
 ```commandline
-python cli.py inspect 139357880437632896
+python cli.py inspect H_c7a8ef8e-60b1-4a66-9613-4b5c1c05b1de
 ```
 Returns:
+```
+====================================================
+ Star Record: H_c7a8ef8e-60b1-4a66-9613-4b5c1c05b1de
+====================================================
+
+Identifiers
+ Hyperion ID                   : H_c7a8ef8e-60b1-4a66-9613-4b5c1c05b1de
+ Gaia ID                       : 137333365999306624
+ Ztf ID                        : 1234
+
+Gaia
+ Parallax                      : 0.22561767660747395
+ Parallax error                : 0.3635902404785156
+ Parallax over error           : 0.6205273270606995
+ Phot bp mean mag              : 20.0537109375
+ Phot rp mean mag              : 18.48678207397461
+ Phot g mean mag               : 19.339881896972656
+ Bp rp                         : 1.5669288635253906
+
+Ztf
+ No data found
+
+Position
+ RA                            : 45.003085°
+ DEC                           : 35.314218°
+
+```
+
+Look up using Gaia ID and JSON output:
+
 ```commandline
-Displaying local database record for star 139357880437632896
-id                            : 139357880437632896
-ra                            : 47.04619738473817
-dec                           : 36.87741300603759
-parallax                      : 0.6306388941314822
-parallax_error                : 0.05209178850054741
-parallax_over_error           : 0.05209178850054741
-ruwe                          : 0.9261038899421692
-astrometric_excess_noise      : 0.0
-phot_g_mean_mag               : 16.143701553344727
-phot_bp_mean_mag              : 16.557584762573242
-phot_rp_mean_mag              : 15.558953285217285
-bp_rp                         : 0.998631477355957
-phot_g_mean_flux_over_error   : 1673.8170166015625
-phot_g_mean_flux_error        : 3.924262523651123
-phot_g_mean_flux              : 6568.497362394624
-radial_velocity               : None
-radial_velocity_error         : None
-phot_variable_flag            : NOT_AVAILABLE
-rv_amplitude_robust           : None
-has_epoch_photometry          : 0
-pmra                          : 0.6270639579300454
-pmdec                         : 1.1085061940368366
-phot_g_n_obs                  : 231
-phot_bp_n_obs                 : 24
-phot_rp_n_obs                 : 25
-teff_gspphot                  : 5073.71533203125
-absolute_magnitude            : 5.142605313296524
-distance                      : 1585.6935074979842
-colour_index                  : 0.998631477355957
-temperature                   : 4746.026354580844
-luminosity                    : 0.7498214752734003
+python cli.py inspect -s gaia -j 137333365999306624
+```
+
+Returns:
+
+```
+{
+  "hyperion_id": "H_c7a8ef8e-60b1-4a66-9613-4b5c1c05b1de",
+  "identifiers": {
+    "gaia": "137333365999306624",
+    "ztf": "1234"
+  },
+  "catalogues": {
+    "gaia": {
+      "parallax": 0.22561767660747395,
+      "parallax_error": 0.3635902404785156,
+      "parallax_over_error": 0.6205273270606995,
+      "phot_bp_mean_mag": 20.0537109375,
+      "phot_rp_mean_mag": 18.48678207397461,
+      "phot_g_mean_mag": 19.339881896972656,
+      "bp_rp": 1.5669288635253906
+    },
+    "ztf": null
+  },
+  "position": {
+    "ra": 45.003085437246824,
+    "dec": 35.31421814401729
+  }
+}
 ```
 
 ## Fetch
