@@ -34,13 +34,13 @@ def cli():
 @cli.command()
 @click.argument("source_id")
 @click.option("-s", "--source", type=click.Choice([*config.SOURCES, "hyperion"]), default="hyperion", help="ID belonging to which catalogue")
+@click.option("-r", "--raw", is_flag=True, help="Display original field names without formatting.")
 @click.option("-v", "--verbose", is_flag=True, help="Print debug logs to the terminal.")
-def inspect(source_id, source, verbose):
+def inspect(source_id, source, raw, verbose):
     """Pull star data from local database"""
-    # TODO: Make output human readable but options for simple and json
+    # TODO: Make output json
     # TODO: Make option for querying remote database
     # TODO: Check for edge cases
-    # TODO: Make labels have no _ and capitalize + add flag to toggle
     from src.database import fetch_star, initialize_database
 
     logger.VERBOSE = verbose
@@ -67,9 +67,6 @@ def inspect(source_id, source, verbose):
             catalogue_data[catalogue] = dict(cata_data[0])
         else:
             catalogue_data[catalogue] = None
-
-    # 1. Lookup SOURCE_IDS to find what catalogues are used
-    # 2. Pull data from catalogue data sets
 
     # === Message ===
 
@@ -101,7 +98,11 @@ def inspect(source_id, source, verbose):
         for field, value in data.items():
             if "id" in field:
                 continue
-            print(f" {field:<30}: {value}")
+            if raw:
+                formatted_field = field
+            else:
+                formatted_field = (field.replace("_", " ")).capitalize()
+            print(f" {formatted_field:<30}: {value}")
         print("")
     print("")
 
@@ -114,8 +115,6 @@ def inspect(source_id, source, verbose):
         dec = round(position_data["dec"], 6)
         print(f" {'RA':<30}: {ra}°")
         print(f" {'DEC':<30}: {dec}°")
-
-
 
 
 @cli.command()
